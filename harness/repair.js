@@ -91,6 +91,11 @@ async function main() {
     if (failures.length > 0) {
       const prompt = buildRepairPrompt({ failures, attempt, previousDiff });
       const agent = await runAgent({ prompt, cwd: ROOT });
+      if (agent.exitCode !== 0) {
+        throw new Error(
+          `coding agent failed (exit ${agent.exitCode}): ${agent.stdout || agent.stderr || 'no output'}. Fix the agent login, then run again.`,
+        );
+      }
       entry.agentExitCode = agent.exitCode;
       entry.agentSaid = agent.stdout.slice(0, 500);
       console.log(`agent: ${entry.agentSaid || '(no output)'}`);

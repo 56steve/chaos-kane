@@ -8,7 +8,8 @@ import { createHub } from './hub.js';
 import { runKane } from './kane.js';
 import { renderReport, summarize } from './report.js';
 import { scrubText } from './scrub.js';
-import { applyEvidenceCheck, applyFaultCheck } from './validity.js';
+import { crossCheck, readEvidencePack, writeRequestsFromHar } from './evidence.js';
+import { applyCrossCheck, applyEvidenceCheck, applyFaultCheck } from './validity.js';
 import { judge } from './verdict.js';
 
 export const APP_PORT = Number(process.env.APP_PORT ?? 4000);
@@ -100,7 +101,20 @@ async function runScenario({ scenario, runIndex, runs, ctx }) {
 
   await writeFile(path.join(outDir, `${scenario}-${runIndex}.ndjson`), scrubText(kane.stdout));
 
-  const { statusMessage, requestStatus } = readObservation(kane.runEnd?.final_state);
+  const { statusMessage, requestStatus: reportedStatus } = readObservation(kane.runEnd?.final_state);
+
+  // The browser's own network log and the final screenshot come from Kane's evidence pack.
+  const evidence = await readEvidencePack(kane.runEnd?.session_dir);
+  const network = evidence.harText ? writeRequestsFromHar(evidence.harText) : [];
+  const check = crossCheck({ reportedStatus, requests: network, harAvailable: evidence.harText !== null });
+  const requestStatus = check.status;
+  let screenshot;
+  if (evidence.screenshot) {
+    await mkdir(path.join(outDir, 'evidence'), { recursive: true });
+    const file = `${scenario}-${runIndex}.jpg`;
+    await writeFile(path.join(outDir, 'evidence', file), evidence.screenshot);
+    screenshot = `evidence/${file}`;
+  }
   // Duplicate detection needs a real backend count; the proxy's count of accepted calls can include idempotent replays.
   const judged = judge({
     statusMessage,
@@ -110,10 +124,13 @@ async function runScenario({ scenario, runIndex, runs, ctx }) {
     noun,
     successPattern,
   });
-  const verdict = applyEvidenceCheck(applyFaultCheck(judged, scenario, faultsFired() - firedBefore, rules), {
-    hasTruth: Boolean(truth),
-    writesSeen: proxy.writesSeen(),
-  });
+  const verdict = applyCrossCheck(
+    applyEvidenceCheck(applyFaultCheck(judged, scenario, faultsFired() - firedBefore, rules), {
+      hasTruth: Boolean(truth),
+      writesSeen: proxy.writesSeen(),
+    }),
+    check,
+  );
 
   return {
     scenario,
@@ -121,6 +138,11 @@ async function runScenario({ scenario, runIndex, runs, ctx }) {
     reasons: verdict.reasons,
     statusMessage,
     requestStatus,
+    statusSource: check.source,
+    crossCheck: check.agreement,
+    kaneReportedStatus: reportedStatus,
+    network: network.map(({ method, path: requestPath, status }) => ({ method, path: requestPath, status })),
+    screenshot,
     orderCreated,
     orderCount,
     evidence: truth ? 'backend' : 'proxy',

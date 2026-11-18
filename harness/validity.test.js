@@ -52,3 +52,29 @@ test('an incomplete verdict is left as it is, with its own reason', () => {
   const incomplete = { outcome: 'incomplete', reasons: ['the ghost fault never fired'] };
   assert.deepEqual(applyEvidenceCheck(incomplete, { hasTruth: false, writesSeen: 0 }), incomplete);
 });
+
+import { applyCrossCheck } from './validity.js';
+
+test('a status disagreement between Kane and the network log makes the verdict unable to verify', () => {
+  const verdict = { outcome: 'survived', reasons: ['ok'] };
+  const result = applyCrossCheck(verdict, { agreement: 'disagreed', status: '201', kaneReported: '500' });
+  assert.equal(result.outcome, 'incomplete');
+  assert.match(result.reasons[0], /Kane reported HTTP 500/);
+  assert.match(result.reasons[0], /network log shows HTTP 201/);
+});
+
+test('a disagreement can also be about no response', () => {
+  const result = applyCrossCheck({ outcome: 'failed', reasons: ['x'] }, { agreement: 'disagreed', status: 'no response', kaneReported: '201' });
+  assert.match(result.reasons[0], /shows no response/);
+});
+
+test('agreement or an unavailable log leaves the verdict alone', () => {
+  const verdict = { outcome: 'failed', reasons: ['x'] };
+  assert.deepEqual(applyCrossCheck(verdict, { agreement: 'agreed' }), verdict);
+  assert.deepEqual(applyCrossCheck(verdict, { agreement: 'unavailable' }), verdict);
+});
+
+test('an already unverifiable verdict keeps its own reason', () => {
+  const verdict = { outcome: 'incomplete', reasons: ['the fault never fired'] };
+  assert.deepEqual(applyCrossCheck(verdict, { agreement: 'disagreed', status: '1', kaneReported: '2' }), verdict);
+});

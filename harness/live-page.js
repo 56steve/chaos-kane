@@ -35,6 +35,11 @@ export const LIVE_PAGE = `<!doctype html>
     h1 { margin: 1.5rem 0 1.25rem; font-size: 1.9rem; line-height: 1.1; font-weight: 700; letter-spacing: -0.025em; }
     h1.good { color: var(--ok); }
     h1.bad { color: var(--bad); }
+    .claim { margin: -0.75rem 0 1.1rem; font-size: 0.9375rem; color: var(--muted); min-height: 1.4em; }
+    .claim b { font-weight: 700; }
+    .claim.bad b { color: var(--bad); }
+    .claim.good b { color: var(--ok); }
+    .claim.warn b { color: var(--warn); }
 
     .layout { display: grid; grid-template-columns: 13rem 1fr; gap: 2rem; align-items: start; padding-top: 1.25rem; border-top: 1px solid var(--ink); }
     .list { display: flex; flex-direction: column; }
@@ -111,6 +116,7 @@ export const LIVE_PAGE = `<!doctype html>
   <main>
     <div class="bar"><strong>chaos-kane</strong><span><span id="target"></span><span id="mode"></span></span></div>
     <h1 id="headline">Waiting for a run</h1>
+    <p class="claim" id="claim"></p>
 
     <div class="layout">
       <nav class="list" id="list" aria-label="Scenarios"></nav>
@@ -162,6 +168,7 @@ export const LIVE_PAGE = `<!doctype html>
       var headlineEl = document.getElementById('headline');
       var targetEl = document.getElementById('target');
       var modeEl = document.getElementById('mode');
+      var claimEl = document.getElementById('claim');
       var stageEl = document.getElementById('stage');
       var els = {};
       ['stageTitle', 'verdict', 'said', 'proxyNote', 'count'].forEach(function (id) { els[id] = document.getElementById(id); });
@@ -194,6 +201,8 @@ export const LIVE_PAGE = `<!doctype html>
         list.textContent = '';
         headlineEl.className = '';
         headlineEl.textContent = 'Waiting for a run';
+        claimEl.textContent = '';
+        claimEl.className = 'claim';
         say('', '');
         render();
       }
@@ -201,7 +210,7 @@ export const LIVE_PAGE = `<!doctype html>
       function verdictOf(result) {
         var why = (result.reasons || []).join(' ');
         if (result.outcome === 'survived') { return 'honest'; }
-        if (result.outcome === 'incomplete') { return 'no data'; }
+        if (result.outcome === 'incomplete') { return 'unable to verify'; }
         if (why.indexOf('fake success') !== -1) { return '\\u2260 fake success'; }
         if (why.indexOf('duplicate') !== -1) { return '\\u2260 duplicate'; }
         return 'no error shown';
@@ -301,6 +310,7 @@ export const LIVE_PAGE = `<!doctype html>
           noun = event.noun || 'record';
           targetEl.textContent = event.target;
           headlineEl.textContent = 'Breaking ' + event.target;
+          if (event.claim) { claimEl.textContent = 'Agent claimed: "' + event.claim + '"'; }
           event.scenarios.forEach(ensureItem);
         } else if (event.type === 'scenario_start') {
           item = ensureItem(event.scenario);
@@ -322,6 +332,12 @@ export const LIVE_PAGE = `<!doctype html>
           var s = event.summary;
           headlineEl.className = s.failed === 0 && s.incomplete === 0 ? 'good' : 'bad';
           headlineEl.textContent = s.survived + ' of ' + s.total + ' survived';
+          if (event.claim) {
+            claimEl.textContent = '';
+            claimEl.appendChild(document.createTextNode('Agent claimed: "' + event.claim.text + '" \\u2192 '));
+            claimEl.appendChild(make('b', '', event.claim.verdict));
+            claimEl.className = 'claim ' + (event.claim.verdict === 'supported' ? 'good' : (event.claim.verdict === 'not supported' ? 'bad' : 'warn'));
+          }
           say('', '');
         }
         render();

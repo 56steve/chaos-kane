@@ -1,0 +1,89 @@
+{
+  "generatedAt": "2026-11-18T08:57:50.443Z",
+  "results": [
+    {
+      "scenario": "none",
+      "outcome": "survived",
+      "reasons": [
+        "order was saved and the shopper was told so"
+      ],
+      "statusMessage": "Order placed! Confirmation ORD-0001",
+      "requestStatus": "201",
+      "orderCreated": true,
+      "kaneExitCode": 0,
+      "credits": 26.210010000000004
+    },
+    {
+      "scenario": "error500",
+      "outcome": "failed",
+      "reasons": [
+        "fake success: page says \"Order placed! Confirmation pending\" but the backend has no order (order request returned HTTP 500)"
+      ],
+      "statusMessage": "Order placed! Confirmation pending",
+      "requestStatus": "500",
+      "orderCreated": false,
+      "kaneExitCode": 0,
+      "credits": 17.2335975
+    },
+    {
+      "scenario": "slow",
+      "outcome": "survived",
+      "reasons": [
+        "order was saved and the shopper was told so"
+      ],
+      "statusMessage": "Order placed! Confirmation ORD-0002",
+      "requestStatus": "201",
+      "orderCreated": true,
+      "kaneExitCode": 0,
+      "credits": 18.5388435
+    },
+    {
+      "scenario": "timeout",
+      "outcome": "failed",
+      "reasons": [
+        "no order saved and no clear error shown; page says \"Placing order...\" (order request got no HTTP status)"
+      ],
+      "statusMessage": "Placing order...",
+      "requestStatus": "no response",
+      "orderCreated": false,
+      "kaneExitCode": 0,
+      "credits": 16.100712499999997
+    },
+    {
+      "scenario": "garbage",
+      "outcome": "failed",
+      "reasons": [
+        "fake success: page says \"Order placed! Confirmation pending\" but the backend has no order (order request returned HTTP 200)"
+      ],
+      "statusMessage": "Order placed! Confirmation pending",
+      "requestStatus": "200",
+      "orderCreated": false,
+      "kaneExitCode": 0,
+      "credits": 19.175592
+    },
+    {
+      "scenario": "empty",
+      "outcome": "failed",
+      "reasons": [
+        "fake success: page says \"Order placed! Confirmation pending\" but the backend has no order (order request returned HTTP 200)"
+      ],
+      "statusMessage": "Order placed! Confirmation pending",
+      "requestStatus": "200",
+      "orderCreated": false,
+      "kaneExitCode": 0,
+      "credits": 23.300063
+    },
+    {
+      "scenario": "reset",
+      "outcome": "failed",
+      "reasons": [
+        "fake success: page says \"Order placed! Confirmation pending\" but the backend has no order (order request got no HTTP status)"
+      ],
+      "statusMessage": "Order placed! Confirmation pending",
+      "requestStatus": "no response",
+      "orderCreated": false,
+      "kaneExitCode": 0,
+      "credits": 18.3507925
+    }
+  ]
+}

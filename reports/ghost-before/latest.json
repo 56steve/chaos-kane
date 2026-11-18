@@ -1,0 +1,23 @@
+{
+  "generatedAt": "2026-11-18T09:55:50.612Z",
+  "results": [
+    {
+      "scenario": "ghost",
+      "outcome": "failed",
+      "reasons": [
+        "duplicate order: one checkout produced 2 orders after a retry (page says \"Order placed! Confirmation ORD-0002\")"
+      ],
+      "statusMessage": "Order placed! Confirmation ORD-0002",
+      "requestStatus": "201",
+      "orderCreated": true,
+      "orderCount": 2,
+      "kaneExitCode": 0,
+      "credits": 27.109745,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "failed"
+      ]
+    }
+  ]
+}

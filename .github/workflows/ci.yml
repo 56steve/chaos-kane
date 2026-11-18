@@ -1,0 +1,32 @@
+# Runs on every push to main or development and on pull requests into main.
+# It needs no secrets and never calls Kane: the unit tests and smoke test run locally on the runner.
+name: ci
+
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Syntax check
+        run: npm run check
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Smoke test (proxy and backend)
+        run: npm run smoke

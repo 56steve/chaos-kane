@@ -12,6 +12,7 @@ export function summarize(results) {
     survived: faults.filter((result) => result.outcome === 'survived').length,
     failed: faults.filter((result) => result.outcome === 'failed').length,
     incomplete: faults.filter((result) => result.outcome === 'incomplete').length,
+    unstable: faults.filter((result) => result.stable === false).length,
     total: faults.length,
     baseline: results.find((result) => result.scenario === 'none')?.outcome ?? 'not run',
     credits: results.reduce((sum, result) => sum + (result.credits ?? 0), 0),
@@ -25,7 +26,7 @@ export function renderReport({ title, generatedAt, results }) {
       (result) => `
       <tr class="${escapeHtml(result.outcome)}">
         <td><code>${escapeHtml(result.scenario)}</code></td>
-        <td><span class="badge ${escapeHtml(result.outcome)}">${escapeHtml(result.outcome)}</span></td>
+        <td><span class="badge ${escapeHtml(result.outcome)}">${escapeHtml(result.outcome)}</span>${result.stable === undefined ? '' : ` <small class="muted">${escapeHtml(result.agreement)}</small>`}</td>
         <td>${escapeHtml(result.statusMessage ?? 'no value')}</td>
         <td>${escapeHtml(result.requestStatus ?? 'no value')}</td>
         <td>${result.orderCreated ? 'order saved' : 'no order'}</td>

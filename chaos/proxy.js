@@ -93,5 +93,12 @@ export function createChaosProxy(targetUrl) {
     }
   });
 
-  return { server, getScenario: () => scenario };
+  function setScenario(name) {
+    if (!SCENARIOS.includes(name)) {
+      throw new Error(`unknown scenario: ${name}`);
+    }
+    scenario = name;
+  }
+
+  return { server, getScenario: () => scenario, setScenario };
 }

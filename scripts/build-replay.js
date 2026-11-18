@@ -7,7 +7,7 @@ import { LIVE_PAGE } from '../harness/live-page.js';
  * the same dashboard page plus the run's events.json. Usage:
  *   node scripts/build-replay.js [path/to/events.json]
  */
-const source = path.resolve(process.argv[2] ?? 'reports/events.json');
+const source = path.resolve(process.argv[2] ?? 'reports/replay/events.json');
 const outDir = path.resolve('docs');
 
 const events = JSON.parse(await readFile(source, 'utf8'));

@@ -1,0 +1,58 @@
+# Example GitHub Actions workflow for chaos-kane. NOT tested in this repository:
+# copy it to .github/workflows/ in your own project and adjust the start command and URL.
+#
+# It needs two repository secrets from your TestMu AI account (Settings, Keys):
+#   LT_USERNAME and LT_ACCESS_KEY
+#
+# Exit codes: 0 all failures survived, 1 a failure was found, 2 no usable result.
+# Add --baseline reports/baseline.json to fail only on NEW failures.
+name: chaos-kane
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  chaos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Kane CLI and Chrome
+        run: |
+          npm install -g @testmuai/kane-cli
+          sudo apt-get update && sudo apt-get install -y google-chrome-stable || true
+
+      - name: Log in to Kane
+        run: kane-cli login --username "$LT_USERNAME" --access-key "$LT_ACCESS_KEY"
+        env:
+          LT_USERNAME: ${{ secrets.LT_USERNAME }}
+          LT_ACCESS_KEY: ${{ secrets.LT_ACCESS_KEY }}
+
+      - name: Start your app
+        run: |
+          npm ci
+          npm start &
+          npx wait-on http://127.0.0.1:3000
+
+      - name: Break the API and check what the user is told
+        run: |
+          node path/to/chaos-kane/bin/chaos-kane.js \
+            --app http://127.0.0.1:3000 \
+            --flow "Add an item to the cart and place the order" \
+            --truth-url http://127.0.0.1:3000/api/orders \
+            --noun order \
+            --faults none,error500,ghost \
+            --agent-claim "the checkout handles API failures" \
+            --no-dashboard
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chaos-kane-reports
+          path: reports/

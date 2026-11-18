@@ -73,7 +73,8 @@ export const LIVE_PAGE = `<!doctype html>
     .tag.slow { fill: var(--warn); }
     .packet { fill: var(--ink); animation: travel 1.6s ease-in-out infinite; }
 
-    .readouts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 0.5rem; }
+    .readouts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin-top: 0.5rem; }
+    .col { padding: 0 0.6rem; text-align: center; }
     .label { margin-bottom: 0.3rem; font: 700 0.6875rem var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
     .value { min-height: 2.6rem; font-size: 1.0625rem; line-height: 1.3; font-weight: 600; overflow-wrap: anywhere; }
     .value.mono { font: 0.875rem/1.4 var(--mono); font-weight: 400; color: var(--muted); }
@@ -99,6 +100,7 @@ export const LIVE_PAGE = `<!doctype html>
       .layout { grid-template-columns: 1fr; gap: 1rem; }
       .list { display: grid; grid-template-columns: 1fr 1fr; gap: 0.15rem 0.5rem; }
       .readouts { grid-template-columns: 1fr; gap: 0.75rem; }
+      .col { padding: 0; text-align: left; }
       .value { min-height: 0; }
       .node-label { font-size: 19px; }
       .tag { font-size: 15px; }

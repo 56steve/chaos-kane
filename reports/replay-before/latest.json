@@ -1,0 +1,157 @@
+{
+  "generatedAt": "2026-11-18T11:21:13.354Z",
+  "results": [
+    {
+      "scenario": "none",
+      "outcome": "survived",
+      "reasons": [
+        "order was saved and the user was told so"
+      ],
+      "statusMessage": "Order placed! Confirmation ORD-0001",
+      "requestStatus": "201",
+      "orderCreated": true,
+      "orderCount": 1,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 18.733004,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "survived"
+      ]
+    },
+    {
+      "scenario": "error500",
+      "outcome": "failed",
+      "reasons": [
+        "fake success: page says \"Order placed! Confirmation pending\" but the backend has no order (request returned HTTP 500)"
+      ],
+      "statusMessage": "Order placed! Confirmation pending",
+      "requestStatus": "500",
+      "orderCreated": false,
+      "orderCount": 0,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 17.093302500000004,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "failed"
+      ]
+    },
+    {
+      "scenario": "slow",
+      "outcome": "survived",
+      "reasons": [
+        "order was saved and the user was told so"
+      ],
+      "statusMessage": "Order placed! Confirmation ORD-0002",
+      "requestStatus": "201",
+      "orderCreated": true,
+      "orderCount": 1,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 21.0546,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "survived"
+      ]
+    },
+    {
+      "scenario": "timeout",
+      "outcome": "failed",
+      "reasons": [
+        "no order saved and no clear error shown; page says \"Placing order...\" (request got no HTTP status)"
+      ],
+      "statusMessage": "Placing order...",
+      "requestStatus": "no response",
+      "orderCreated": false,
+      "orderCount": 0,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 20.5182475,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "failed"
+      ]
+    },
+    {
+      "scenario": "garbage",
+      "outcome": "failed",
+      "reasons": [
+        "fake success: page says \"Order placed! Confirmation pending\" but the backend has no order (request returned HTTP 200)"
+      ],
+      "statusMessage": "Order placed! Confirmation pending",
+      "requestStatus": "200",
+      "orderCreated": false,
+      "orderCount": 0,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 24.781539999999996,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "failed"
+      ]
+    },
+    {
+      "scenario": "empty",
+      "outcome": "failed",
+      "reasons": [
+        "fake success: page says \"Order placed! Confirmation pending\" but the backend has no order (request returned HTTP 200)"
+      ],
+      "statusMessage": "Order placed! Confirmation pending",
+      "requestStatus": "200",
+      "orderCreated": false,
+      "orderCount": 0,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 22.130131499999997,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "failed"
+      ]
+    },
+    {
+      "scenario": "reset",
+      "outcome": "failed",
+      "reasons": [
+        "fake success: page says \"Order placed! Confirmation pending\" but the backend has no order (request got no HTTP status)"
+      ],
+      "statusMessage": "Order placed! Confirmation pending",
+      "requestStatus": "no response",
+      "orderCreated": false,
+      "orderCount": 0,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 13.499362499999998,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "failed"
+      ]
+    },
+    {
+      "scenario": "ghost",
+      "outcome": "failed",
+      "reasons": [
+        "duplicate order: one flow produced 2 orders after a retry (page says \"Order placed! Confirmation ORD-0004\")"
+      ],
+      "statusMessage": "Order placed! Confirmation ORD-0004",
+      "requestStatus": "201",
+      "orderCreated": true,
+      "orderCount": 2,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 27.584254999999995,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "failed"
+      ]
+    }
+  ]
+}

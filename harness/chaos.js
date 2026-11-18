@@ -6,6 +6,7 @@ import { aggregateRuns } from './aggregate.js';
 import { createHub } from './hub.js';
 import { runKane } from './kane.js';
 import { renderReport, summarize } from './report.js';
+import { scrubText } from './scrub.js';
 import { applyFaultCheck } from './validity.js';
 import { judge } from './verdict.js';
 
@@ -96,7 +97,7 @@ async function runScenario({ scenario, runIndex, runs, ctx }) {
   const orderCount = truth ? (await truth.count()) - before : proxy.acceptedMutations();
   const orderCreated = orderCount > 0;
 
-  await writeFile(path.join(outDir, `${scenario}-${runIndex}.ndjson`), kane.stdout);
+  await writeFile(path.join(outDir, `${scenario}-${runIndex}.ndjson`), scrubText(kane.stdout));
 
   const { statusMessage, requestStatus } = readObservation(kane.runEnd?.final_state);
   // Duplicate detection needs a real backend count; the proxy's count of accepted calls can include idempotent replays.

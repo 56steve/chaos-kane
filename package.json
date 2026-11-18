@@ -1,0 +1,15 @@
+{
+  "name": "chaos-kane",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Kane CLI hackathon project: Kane breaks the API under an AI-built app and checks what the app actually does.",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node src/dev.js",
+    "check": "node --check app/server.js && node --check app/client.js && node --check chaos/proxy.js && node --check src/dev.js",
+    "smoke": "node scripts/smoke.js"
+  }
+}

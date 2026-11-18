@@ -1,4 +1,6 @@
+import { readFile } from 'node:fs/promises';
 import http from 'node:http';
+import path from 'node:path';
 import { LIVE_PAGE } from './live-page.js';
 
 const KEEPALIVE_MS = 15000;
@@ -7,7 +9,9 @@ const KEEPALIVE_MS = 15000;
  * Serves the live dashboard on localhost. The page connects to /events, gets
  * the history of the run so far, then receives new events as they happen.
  */
-export function startLiveServer({ hub, port }) {
+const EVIDENCE_FILE = /^[A-Za-z0-9._-]+\.jpg$/;
+
+export function startLiveServer({ hub, port, evidenceDir = null }) {
   const streams = new Set();
 
   const server = http.createServer((req, res) => {
@@ -16,6 +20,25 @@ export function startLiveServer({ hub, port }) {
     if (req.method === 'GET' && url.pathname === '/') {
       res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
       res.end(LIVE_PAGE);
+      return;
+    }
+
+    if (req.method === 'GET' && url.pathname.startsWith('/evidence/') && evidenceDir) {
+      const name = url.pathname.slice('/evidence/'.length);
+      if (!EVIDENCE_FILE.test(name) || name.includes('..')) {
+        res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
+        res.end('not found');
+        return;
+      }
+      readFile(path.join(evidenceDir, name))
+        .then((body) => {
+          res.writeHead(200, { 'content-type': 'image/jpeg', 'cache-control': 'no-store' });
+          res.end(body);
+        })
+        .catch(() => {
+          res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
+          res.end('not found');
+        });
       return;
     }
 

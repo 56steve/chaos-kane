@@ -48,3 +48,35 @@ test('the server serves the page and replays history over server-sent events', a
     live.close();
   }
 });
+
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
+test('the server serves saved screenshots but nothing else from disk', async () => {
+  const dir = mkdtempSync(path.join(os.tmpdir(), 'ck-shots-'));
+  writeFileSync(path.join(dir, 'a.jpg'), 'JPEGDATA');
+  writeFileSync(path.join(dir, 'secret.txt'), 'nope');
+  const live = await startLiveServer({ hub: createHub(() => 'T'), port: 0, evidenceDir: dir });
+  try {
+    const ok = await fetch(`${live.url}/evidence/a.jpg`);
+    assert.equal(ok.status, 200);
+    assert.equal(ok.headers.get('content-type'), 'image/jpeg');
+    assert.equal(await ok.text(), 'JPEGDATA');
+    assert.equal((await fetch(`${live.url}/evidence/missing.jpg`)).status, 404);
+    assert.equal((await fetch(`${live.url}/evidence/secret.txt`)).status, 404, 'only .jpg files are served');
+    assert.equal((await fetch(`${live.url}/evidence/..%2Fa.jpg`)).status, 404, 'encoded traversal is refused');
+    assert.equal((await fetch(`${live.url}/evidence/%2e%2e/a.jpg`)).status, 404);
+  } finally {
+    live.close();
+  }
+});
+
+test('without an evidence folder there is no evidence route', async () => {
+  const live = await startLiveServer({ hub: createHub(() => 'T'), port: 0 });
+  try {
+    assert.equal((await fetch(`${live.url}/evidence/a.jpg`)).status, 404);
+  } finally {
+    live.close();
+  }
+});

@@ -57,7 +57,7 @@ async function main() {
   }
 
   const hub = createHub();
-  const live = config.dashboard ? await startLiveServer({ hub, port: config.dashboardPort }) : null;
+  const live = config.dashboard ? await startLiveServer({ hub, port: config.dashboardPort, evidenceDir: path.resolve(config.out, 'evidence') }) : null;
   if (live) {
     console.log(`live dashboard: ${live.url}`);
   }

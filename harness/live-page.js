@@ -89,6 +89,11 @@ export const LIVE_PAGE = `<!doctype html>
     .stage.survived .col.truth .value.big { color: var(--ok); }
     .sub { display: block; margin-top: 0.25rem; font: 0.8125rem var(--mono); font-weight: 400; color: var(--muted); }
 
+    .shot { display: block; margin-top: 1.1rem; color: var(--muted); font: 0.75rem var(--mono); text-decoration: none; }
+    .shot[hidden] { display: none; }
+    .shot .frame { position: relative; display: block; overflow: hidden; aspect-ratio: 11 / 6; border: 1px solid var(--line); border-radius: 0.4rem; margin-bottom: 0.35rem; background: #fff; }
+    .shot img { position: absolute; top: 0; left: 50%; width: 250%; max-width: none; transform: translateX(-50%); }
+    .shot:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
     .now { margin-top: 1.1rem; min-height: 1.4em; font: 0.8125rem var(--mono); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .now.fault { color: var(--bad); font-weight: 700; }
 
@@ -128,6 +133,7 @@ export const LIVE_PAGE = `<!doctype html>
           <div class="col"><div class="label">Proxy did</div><div class="value mono" id="proxyNote"></div></div>
           <div class="col truth"><div class="label">Backend saved</div><div class="value big" id="count"></div></div>
         </div>
+        <a class="shot" id="shotLink" target="_blank" rel="noopener" hidden><span class="frame"><img id="shotImg" alt="Screenshot of the page Kane saw after the run" /></span><span>Kane's screenshot, click for full size</span></a>
         <div class="now" id="now"></div>
       </section>
     </div>
@@ -169,6 +175,8 @@ export const LIVE_PAGE = `<!doctype html>
       var targetEl = document.getElementById('target');
       var modeEl = document.getElementById('mode');
       var claimEl = document.getElementById('claim');
+      var shotLink = document.getElementById('shotLink');
+      var shotImg = document.getElementById('shotImg');
       var stageEl = document.getElementById('stage');
       var els = {};
       ['stageTitle', 'verdict', 'said', 'proxyNote', 'count'].forEach(function (id) { els[id] = document.getElementById(id); });
@@ -277,6 +285,7 @@ export const LIVE_PAGE = `<!doctype html>
         });
         if (!name || !data[name]) {
           stageEl.className = 'stage';
+          shotLink.hidden = true;
           return;
         }
         var item = data[name];
@@ -291,11 +300,19 @@ export const LIVE_PAGE = `<!doctype html>
           els.said.textContent = result.statusMessage === undefined ? 'nothing' : '\\u201C' + result.statusMessage + '\\u201D';
           var status = String(result.requestStatus === undefined ? '' : result.requestStatus);
           if (status !== '') {
-            els.said.appendChild(make('span', 'sub', status.length === 3 && !isNaN(Number(status)) ? 'request: HTTP ' + status : 'request: ' + status));
+            els.said.appendChild(make('span', 'sub', (status.length === 3 && !isNaN(Number(status)) ? 'request: HTTP ' + status : 'request: ' + status) + (result.statusSource === 'network-log' ? ' \\u00B7 network log' : '')));
           }
           els.count.textContent = String(count);
           els.count.appendChild(make('small', '', noun + (count === 1 ? '' : 's')));
+          if (result.screenshot) {
+            shotImg.src = result.screenshot;
+            shotLink.href = result.screenshot;
+            shotLink.hidden = false;
+          } else {
+            shotLink.hidden = true;
+          }
         } else {
+          shotLink.hidden = true;
           stageEl.className = 'stage';
           els.verdict.textContent = item.status === 'running' ? 'kane is on it' : '';
           els.said.textContent = item.status === 'running' ? '...' : '';

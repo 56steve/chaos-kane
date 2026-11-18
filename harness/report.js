@@ -32,7 +32,7 @@ export function renderReport({ title, generatedAt, results }) {
         <td>${escapeHtml(result.statusMessage ?? 'no value')}</td>
         <td>${escapeHtml(result.requestStatus ?? 'no value')}</td>
         <td>${result.orderCreated ? 'order saved' : 'no order'}</td>
-        <td>${escapeHtml(result.reasons.join('; '))}</td>
+        <td>${escapeHtml(result.reasons.join('; '))}${result.screenshot ? ` <a href="${escapeHtml(result.screenshot)}">screenshot</a>` : ''}</td>
       </tr>`,
     )
     .join('');

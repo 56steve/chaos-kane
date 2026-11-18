@@ -9,9 +9,10 @@
   },
   "scripts": {
     "start": "node src/dev.js",
-    "check": "node --check app/server.js && node --check app/client.js && node --check chaos/proxy.js && node --check src/dev.js && node --check harness/verdict.js && node --check harness/kane.js && node --check harness/report.js && node --check harness/run.js",
+    "check": "node --check app/server.js && node --check app/client.js && node --check chaos/proxy.js && node --check src/dev.js && node --check harness/verdict.js && node --check harness/kane.js && node --check harness/report.js && node --check harness/run.js && node --check harness/chaos.js && node --check harness/scope.js && node --check harness/prompt.js && node --check harness/agent.js && node --check harness/repair.js",
     "test": "node --test \"harness/*.test.js\"",
     "smoke": "node scripts/smoke.js",
-    "chaos": "node harness/run.js"
+    "chaos": "node harness/run.js",
+    "repair": "node harness/repair.js"
   }
 }

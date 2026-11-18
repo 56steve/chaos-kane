@@ -90,6 +90,7 @@ export function createChaosProxy(targetUrl, options = {}) {
   let scenario = 'none';
   let ghostArmed = false;
   let accepted = 0;
+  let writes = 0;
 
   function select(name) {
     if (!SCENARIOS.includes(name)) {
@@ -128,6 +129,10 @@ export function createChaosProxy(targetUrl, options = {}) {
       }
       sendText(res, 200, 'application/json', JSON.stringify({ scenario, scenarios: SCENARIOS }));
       return;
+    }
+
+    if (methods.includes(req.method ?? '')) {
+      writes += 1;
     }
 
     if (scenario === 'none' || !isFaultable(req, url.pathname)) {
@@ -190,8 +195,10 @@ export function createChaosProxy(targetUrl, options = {}) {
     getScenario: () => scenario,
     setScenario: select,
     acceptedMutations: () => accepted,
+    writesSeen: () => writes,
     resetAccepted: () => {
       accepted = 0;
+      writes = 0;
     },
   };
 }

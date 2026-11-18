@@ -71,3 +71,28 @@ test('a fault only fires on requests that match the path and method rules', asyn
     upstream.closeAllConnections();
   }
 });
+
+test('writes are counted even when the fault answers them itself', async () => {
+  const upstream = http.createServer((req, res) => {
+    res.writeHead(200);
+    res.end('{}');
+  });
+  await new Promise((resolve) => upstream.listen(0, '127.0.0.1', resolve));
+  const proxy = createChaosProxy(`http://127.0.0.1:${upstream.address().port}`);
+  await new Promise((resolve) => proxy.server.listen(0, '127.0.0.1', resolve));
+  const base = `http://127.0.0.1:${proxy.server.address().port}`;
+  try {
+    proxy.setScenario('error500');
+    await fetch(`${base}/api/order`, { method: 'POST' });
+    await fetch(`${base}/anything`, { method: 'GET' });
+    assert.equal(proxy.writesSeen(), 1);
+    assert.equal(proxy.acceptedMutations(), 0);
+    proxy.resetAccepted();
+    assert.equal(proxy.writesSeen(), 0);
+  } finally {
+    proxy.server.close();
+    proxy.server.closeAllConnections();
+    upstream.close();
+    upstream.closeAllConnections();
+  }
+});

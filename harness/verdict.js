@@ -52,7 +52,7 @@ export function judge({
   if (count > 1) {
     return {
       outcome: 'failed',
-      reasons: [`duplicate ${noun}: one flow produced ${count} ${noun}s after a retry (page says "${message}")`],
+      reasons: [`duplicate ${noun}: one flow produced ${count} ${noun}s from a retry or double click (page says "${message}")`],
     };
   }
 

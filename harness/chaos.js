@@ -7,7 +7,7 @@ import { createHub } from './hub.js';
 import { runKane } from './kane.js';
 import { renderReport, summarize } from './report.js';
 import { scrubText } from './scrub.js';
-import { applyFaultCheck } from './validity.js';
+import { applyEvidenceCheck, applyFaultCheck } from './validity.js';
 import { judge } from './verdict.js';
 
 export const APP_PORT = Number(process.env.APP_PORT ?? 4000);
@@ -109,7 +109,10 @@ async function runScenario({ scenario, runIndex, runs, ctx }) {
     noun,
     successPattern,
   });
-  const verdict = applyFaultCheck(judged, scenario, faultsFired() - firedBefore, rules);
+  const verdict = applyEvidenceCheck(applyFaultCheck(judged, scenario, faultsFired() - firedBefore, rules), {
+    hasTruth: Boolean(truth),
+    writesSeen: proxy.writesSeen(),
+  });
 
   return {
     scenario,

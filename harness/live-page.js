@@ -18,44 +18,76 @@ export const LIVE_PAGE = `<!doctype html>
       --bad: oklch(50% 0.19 27);
       --bad-tint: oklch(95.5% 0.03 27);
       --ok: oklch(46% 0.11 155);
-      --warn: oklch(52% 0.12 75);
+      --ok-tint: oklch(96% 0.025 155);
+      --warn: oklch(55% 0.13 75);
       --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
       --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
     * { box-sizing: border-box; }
-    body { margin: 0; background: var(--bg); color: var(--ink); font: 0.9375rem/1.5 var(--sans); }
-    main { max-width: 74rem; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
-    .brand { display: flex; justify-content: space-between; gap: 1rem; color: var(--muted); font-size: 0.8125rem; }
-    .brand strong { color: var(--ink); font-weight: 600; }
-    h1 { margin: 2.5rem 0 0.5rem; max-width: 36ch; font-size: 2.1rem; line-height: 1.15; font-weight: 600; letter-spacing: -0.02em; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 1rem/1.5 var(--sans); }
+    main { max-width: 76rem; margin: 0 auto; padding: 1.75rem 1.5rem 3rem; }
+    .brand { display: flex; justify-content: space-between; align-items: center; gap: 1rem; color: var(--muted); font-size: 0.875rem; }
+    .brand strong { color: var(--ink); font-weight: 700; letter-spacing: 0.01em; }
+    h1 { margin: 2rem 0 0.35rem; font-size: 2.6rem; line-height: 1.1; font-weight: 700; letter-spacing: -0.025em; }
     h1.good { color: var(--ok); }
     h1.bad { color: var(--bad); }
-    .sub { margin: 0; max-width: 70ch; color: var(--muted); min-height: 1.5em; }
-    h2 { margin: 2.5rem 0 0.5rem; font-size: 1.05rem; font-weight: 600; }
-    .scroll { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; min-width: 52rem; }
-    thead th { padding: 0 1rem 0.55rem 0; text-align: left; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--ink); }
-    tbody th, tbody td { padding: 0.8rem 1rem 0.8rem 0; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); font-weight: 400; }
-    tbody th { font-weight: 600; white-space: nowrap; }
-    td.status { white-space: nowrap; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-    td.status.survived { color: var(--ok); }
-    td.status.failed { color: var(--bad); }
-    td.status.incomplete { color: var(--warn); }
-    td.status .dot { display: inline-block; width: 0.5rem; height: 0.5rem; margin-right: 0.45rem; border-radius: 50%; background: var(--ink); animation: pulse 1s ease-in-out infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
-    tr.failed td, tr.failed th { background: var(--bad-tint); }
-    .mono { font-family: var(--mono); font-size: 0.8125rem; overflow-wrap: anywhere; }
-    .contradiction { color: var(--bad); font-weight: 600; }
-    .why { color: var(--muted); font-size: 0.8125rem; max-width: 40ch; }
-    .feed { height: 15rem; overflow-y: auto; padding: 0.6rem 0; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--line); font: 0.8125rem/1.55 var(--mono); }
-    .line { color: var(--muted); }
-    .line.fault { color: var(--bad); font-weight: 600; }
-    .line.result { color: var(--ink); font-weight: 600; }
+    .sub { margin: 0; min-height: 1.5em; max-width: 72ch; color: var(--muted); }
+
+    .strip { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 0.5rem; margin: 2rem 0 1.5rem; }
+    .seg { padding: 0; border: 0; background: none; font: inherit; text-align: left; color: var(--muted); cursor: pointer; }
+    .seg .bar { display: block; height: 0.4rem; margin-bottom: 0.45rem; border-radius: 999px; background: var(--line); }
+    .seg .name { display: block; font-size: 0.8125rem; line-height: 1.25; }
+    .seg.running .bar { background: var(--ink); animation: pulse 1s ease-in-out infinite; }
+    .seg.survived .bar { background: var(--ok); }
+    .seg.failed .bar { background: var(--bad); }
+    .seg.incomplete .bar { background: var(--warn); }
+    .seg.selected .name { color: var(--ink); font-weight: 700; }
+    .seg:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+
+    .stage { padding: 1.75rem 0 1.5rem; border-top: 1px solid var(--ink); }
+    .stage-head h2 { margin: 0; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.01em; }
+    .stage-head p { margin: 0.2rem 0 0; color: var(--muted); }
+    .duel { display: grid; grid-template-columns: 1fr 10rem 1fr; align-items: stretch; gap: 1rem; margin-top: 1.5rem; }
+    .side { padding: 1.4rem 1.5rem; border: 1px solid var(--line); border-radius: 0.5rem; background: #fff8; min-height: 13rem; }
+    .label { margin-bottom: 0.9rem; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+    .said { font-size: 2rem; line-height: 1.2; font-weight: 700; letter-spacing: -0.015em; overflow-wrap: anywhere; }
+    .count { font-size: 4.25rem; line-height: 1; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+    .count small { display: block; margin-top: 0.4rem; font-size: 1.125rem; font-weight: 500; letter-spacing: 0; color: var(--muted); }
+    .meta { margin-top: 0.9rem; font: 0.875rem var(--mono); color: var(--muted); }
+    .middle { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    .middle .sign { font-size: 4rem; line-height: 1; font-weight: 700; color: var(--muted); }
+    .middle .word { margin-top: 0.5rem; font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+    .stage.failed .side { border-color: var(--bad); }
+    .stage.failed .side.truth { background: var(--bad-tint); }
+    .stage.failed .count, .stage.failed .middle .sign, .stage.failed .middle .word { color: var(--bad); }
+    .stage.survived .side { border-color: var(--ok); }
+    .stage.survived .side.truth { background: var(--ok-tint); }
+    .stage.survived .count, .stage.survived .middle .sign, .stage.survived .middle .word { color: var(--ok); }
+    .stage.incomplete .middle .sign, .stage.incomplete .middle .word { color: var(--warn); }
+    .why { margin: 1.1rem 0 0; min-height: 1.5em; max-width: 80ch; color: var(--muted); }
+
+    .feed { margin-top: 1.25rem; padding-top: 0.75rem; border-top: 1px solid var(--line); font: 0.8125rem/1.6 var(--mono); min-height: 9.5rem; }
+    .line { color: var(--muted); overflow-wrap: anywhere; }
+    .line.fault { color: var(--bad); font-weight: 700; }
+    .line.result { color: var(--ink); font-weight: 700; }
     .line.system { color: var(--ink); }
-    button { margin-left: 0.6rem; padding: 0.25rem 0.7rem; font: inherit; font-size: 0.8125rem; color: var(--ink); background: transparent; border: 1px solid var(--ink); border-radius: 0.3rem; cursor: pointer; }
-    button:hover { background: var(--ink); color: var(--bg); }
-    button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-    @media (prefers-reduced-motion: reduce) { td.status .dot { animation: none; } }
+
+    button.again { margin-left: 0.75rem; padding: 0.25rem 0.75rem; font: inherit; font-size: 0.8125rem; color: var(--ink); background: transparent; border: 1px solid var(--ink); border-radius: 0.3rem; cursor: pointer; }
+    button.again:hover { background: var(--ink); color: var(--bg); }
+    button.again:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+    @keyframes pulse { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { .seg.running .bar { animation: none; } }
+    @media (max-width: 820px) {
+      h1 { font-size: 1.9rem; }
+      .strip { grid-auto-flow: row; grid-template-columns: 1fr 1fr; }
+      .duel { grid-template-columns: 1fr; }
+      .middle { flex-direction: row; gap: 0.75rem; justify-content: flex-start; }
+      .middle .sign { font-size: 2rem; }
+      .middle .word { margin-top: 0; }
+      .said { font-size: 1.5rem; }
+      .count { font-size: 3rem; }
+    }
   </style>
 </head>
 <body>
@@ -64,16 +96,27 @@ export const LIVE_PAGE = `<!doctype html>
     <h1 id="headline">Waiting for a run</h1>
     <p class="sub" id="sub"></p>
 
-    <h2>What the user saw, and what the backend did</h2>
-    <div class="scroll">
-      <table>
-        <thead><tr><th>Fault injected</th><th>Status</th><th>Page said</th><th>Request</th><th>Backend</th><th>Why</th></tr></thead>
-        <tbody id="rows"></tbody>
-      </table>
-    </div>
+    <div class="strip" id="strip" role="group" aria-label="Scenarios"></div>
 
-    <h2>Live feed</h2>
-    <div class="feed" id="feed" aria-live="polite"></div>
+    <section class="stage" id="stage" aria-live="polite">
+      <div class="stage-head"><h2 id="stageTitle">Nothing running yet</h2><p id="stageNote"></p></div>
+      <div class="duel">
+        <div class="side">
+          <div class="label">The page told the user</div>
+          <div class="said" id="said"></div>
+          <div class="meta" id="request"></div>
+        </div>
+        <div class="middle"><div class="sign" id="sign"></div><div class="word" id="word"></div></div>
+        <div class="side truth">
+          <div class="label">The backend actually</div>
+          <div class="count" id="count"></div>
+          <div class="meta" id="truthNote"></div>
+        </div>
+      </div>
+      <p class="why" id="why"></p>
+    </section>
+
+    <div class="feed" id="feed"></div>
   </main>
   <script>
     (function () {
@@ -81,16 +124,32 @@ export const LIVE_PAGE = `<!doctype html>
         none: 'Healthy API', error500: 'Server error', slow: 'Slow server', timeout: 'No answer',
         garbage: 'HTML instead of JSON', empty: 'Empty response', reset: 'Connection dropped', ghost: 'Response lost after saving'
       };
-      var rowsEl = document.getElementById('rows');
+      var NOTES = {
+        none: 'Nothing is broken. This is the baseline.',
+        error500: 'The API answers HTTP 500.',
+        slow: 'The API answers correctly, but only after 6 seconds.',
+        timeout: 'The API never answers.',
+        garbage: 'The API answers 200 with an HTML page instead of JSON.',
+        empty: 'The API answers 200 with an empty body.',
+        reset: 'The connection to the API is dropped.',
+        ghost: 'The backend saves the order, then the response is lost. The user retries.'
+      };
+      var strip = document.getElementById('strip');
       var feedEl = document.getElementById('feed');
       var headlineEl = document.getElementById('headline');
       var subEl = document.getElementById('sub');
       var targetEl = document.getElementById('target');
       var modeEl = document.getElementById('mode');
-      var rows = {};
-      var total = 0;
-      var finished = 0;
+      var stageEl = document.getElementById('stage');
+      var els = {};
+      ['stageTitle', 'stageNote', 'said', 'request', 'sign', 'word', 'count', 'truthNote', 'why'].forEach(function (id) { els[id] = document.getElementById(id); });
+
+      var data = {};
+      var order = [];
       var noun = 'record';
+      var latest = null;
+      var pinned = null;
+      var lastKane = '';
       var timer = null;
 
       function make(tag, cls, text) {
@@ -99,83 +158,118 @@ export const LIVE_PAGE = `<!doctype html>
         if (text !== undefined) { el.textContent = text; }
         return el;
       }
+      function title(scenario) { return TITLES[scenario] || scenario; }
 
       function reset() {
-        rowsEl.textContent = '';
+        data = {}; order = []; latest = null; pinned = null; lastKane = '';
+        strip.textContent = '';
         feedEl.textContent = '';
-        rows = {};
-        total = 0;
-        finished = 0;
         headlineEl.className = '';
         headlineEl.textContent = 'Waiting for a run';
         subEl.textContent = '';
+        render();
       }
 
       function feed(text, kind) {
         feedEl.appendChild(make('div', 'line ' + kind, text));
-        while (feedEl.childNodes.length > 80) { feedEl.removeChild(feedEl.firstChild); }
-        feedEl.scrollTop = feedEl.scrollHeight;
+        while (feedEl.childNodes.length > 8) { feedEl.removeChild(feedEl.firstChild); }
       }
-
-      function title(scenario) { return TITLES[scenario] || scenario; }
 
       function describeRequest(status) {
         var text = String(status === undefined || status === null ? '' : status);
-        if (text.length === 3 && !isNaN(Number(text))) { return 'HTTP ' + text; }
-        return text === '' ? 'not recorded' : text;
+        if (text.length === 3 && !isNaN(Number(text))) { return 'order request: HTTP ' + text; }
+        return 'order request: ' + (text === '' ? 'not recorded' : text);
       }
 
-      function ensureRow(scenario) {
-        if (rows[scenario]) { return rows[scenario]; }
-        var tr = make('tr');
-        var th = make('th', '', title(scenario));
-        var status = make('td', 'status', 'waiting');
-        var said = make('td', 'mono');
-        var request = make('td', 'mono');
-        var backend = make('td', 'mono');
-        var why = make('td', 'why');
-        [th, status, said, request, backend, why].forEach(function (cell) { tr.appendChild(cell); });
-        rowsEl.appendChild(tr);
-        rows[scenario] = { tr: tr, status: status, said: said, request: request, backend: backend, why: why };
-        return rows[scenario];
+      function verdictOf(result) {
+        var why = (result.reasons || []).join(' ');
+        if (result.outcome === 'survived') { return { sign: '=', word: 'Honest' }; }
+        if (result.outcome === 'incomplete') { return { sign: '?', word: 'No observation' }; }
+        if (why.indexOf('fake success') !== -1) { return { sign: '\\u2260', word: 'Fake success' }; }
+        if (why.indexOf('duplicate') !== -1) { return { sign: '\\u2260', word: 'Duplicate' }; }
+        return { sign: '\\u2260', word: 'No error shown' };
+      }
+
+      function selectedScenario() { return pinned || latest; }
+
+      function ensureSegment(scenario) {
+        if (data[scenario]) { return data[scenario]; }
+        var button = make('button', 'seg');
+        button.type = 'button';
+        button.appendChild(make('span', 'bar'));
+        button.appendChild(make('span', 'name', title(scenario)));
+        button.onclick = function () { pinned = scenario; render(); };
+        strip.appendChild(button);
+        data[scenario] = { button: button, status: 'waiting', result: null };
+        order.push(scenario);
+        return data[scenario];
+      }
+
+      function render() {
+        var name = selectedScenario();
+        order.forEach(function (scenario) {
+          var item = data[scenario];
+          item.button.className = 'seg ' + item.status + (scenario === name ? ' selected' : '');
+        });
+        if (!name) {
+          stageEl.className = 'stage';
+          return;
+        }
+        var item = data[name];
+        els.stageTitle.textContent = title(name);
+        els.stageNote.textContent = NOTES[name] || '';
+        if (item.result) {
+          var result = item.result;
+          var verdict = verdictOf(result);
+          var count = result.orderCount === undefined ? (result.orderCreated ? 1 : 0) : result.orderCount;
+          stageEl.className = 'stage ' + result.outcome;
+          els.said.textContent = result.statusMessage === undefined ? 'Nothing recorded' : '\\u201C' + result.statusMessage + '\\u201D';
+          els.request.textContent = describeRequest(result.requestStatus);
+          els.sign.textContent = verdict.sign;
+          els.word.textContent = verdict.word;
+          els.count.textContent = String(count);
+          els.count.appendChild(make('small', '', noun + (count === 1 ? '' : 's') + ' saved'));
+          els.truthNote.textContent = result.evidence === 'proxy' ? 'counted by the proxy' : 'read from the backend';
+          els.why.textContent = (result.reasons || [])[0] || '';
+        } else {
+          stageEl.className = 'stage';
+          els.said.textContent = item.status === 'running' ? 'Waiting for the page' : 'Not run yet';
+          els.request.textContent = '';
+          els.sign.textContent = item.status === 'running' ? '...' : '';
+          els.word.textContent = item.status === 'running' ? 'Kane is on it' : '';
+          els.count.textContent = '';
+          els.truthNote.textContent = item.status === 'running' ? 'counted when Kane finishes' : '';
+          els.why.textContent = item.status === 'running' && lastKane ? 'Kane: ' + lastKane : '';
+        }
       }
 
       function handle(event) {
-        var row;
+        var item;
         if (event.type === 'run_start') {
           reset();
-          total = event.scenarios.filter(function (name) { return name !== 'none'; }).length;
           noun = event.noun || 'record';
           targetEl.textContent = event.target;
           headlineEl.textContent = 'Breaking ' + event.target;
           subEl.textContent = event.flow;
-          event.scenarios.forEach(ensureRow);
+          event.scenarios.forEach(ensureSegment);
           feed('run started: ' + event.scenarios.length + ' scenario(s), ' + event.repeat + ' run(s) each', 'system');
         } else if (event.type === 'scenario_start') {
-          row = ensureRow(event.scenario);
-          row.status.textContent = '';
-          row.status.className = 'status';
-          row.status.appendChild(make('span', 'dot'));
-          row.status.appendChild(document.createTextNode(event.runs > 1 ? 'running ' + event.run + '/' + event.runs : 'running'));
+          item = ensureSegment(event.scenario);
+          item.status = 'running';
+          latest = event.scenario;
+          lastKane = '';
           headlineEl.textContent = 'Running: ' + title(event.scenario);
           feed('Kane starts: ' + title(event.scenario), 'system');
         } else if (event.type === 'fault') {
           feed('fault: proxy ' + event.action + ' (' + event.method + ' ' + event.path + ')', 'fault');
         } else if (event.type === 'kane_line') {
+          lastKane = event.text;
           feed('kane: ' + event.text, 'kane');
         } else if (event.type === 'scenario_result') {
-          row = ensureRow(event.scenario);
-          row.status.textContent = event.outcome + (event.agreement && event.agreement.split('/')[1] !== '1' ? ' ' + event.agreement : '');
-          row.status.className = 'status ' + event.outcome;
-          row.said.textContent = '"' + (event.statusMessage === undefined ? 'nothing recorded' : event.statusMessage) + '"';
-          row.request.textContent = describeRequest(event.requestStatus);
-          var count = event.orderCount === undefined ? (event.orderCreated ? 1 : 0) : event.orderCount;
-          row.backend.textContent = count > 0 ? count + ' ' + noun + (count === 1 ? '' : 's') + ' saved' : 'none saved';
-          var fake = (event.reasons || []).join(' ').indexOf('fake success') !== -1 || (event.reasons || []).join(' ').indexOf('duplicate') !== -1;
-          row.backend.className = 'mono' + (fake ? ' contradiction' : '');
-          row.why.textContent = (event.reasons || [])[0] || '';
-          row.tr.className = event.outcome;
-          if (event.scenario !== 'none') { finished += 1; }
+          item = ensureSegment(event.scenario);
+          item.status = event.outcome;
+          item.result = event;
+          latest = event.scenario;
           feed(title(event.scenario) + ': ' + event.outcome, 'result');
         } else if (event.type === 'run_end') {
           var s = event.summary;
@@ -184,10 +278,11 @@ export const LIVE_PAGE = `<!doctype html>
           subEl.textContent = s.failed + ' failed, ' + s.incomplete + ' incomplete. Kane credits used: ' + Math.round(s.credits) + '. Verdicts come from the page text and the backend, never from Kane\\'s own pass or fail.';
           feed('run finished', 'system');
         }
+        render();
       }
 
       function connectLive() {
-        modeEl.textContent = ' · live';
+        modeEl.textContent = ' \\u00B7 live';
         var source = new EventSource('/events');
         source.onmessage = function (message) { handle(JSON.parse(message.data)); };
       }
@@ -195,7 +290,7 @@ export const LIVE_PAGE = `<!doctype html>
       function replay(events) {
         if (timer) { clearTimeout(timer); }
         reset();
-        modeEl.textContent = ' · recorded run, replayed';
+        modeEl.textContent = ' \\u00B7 recorded run, replayed';
         var index = 0;
         function step() {
           if (index >= events.length) { return; }
@@ -204,18 +299,16 @@ export const LIVE_PAGE = `<!doctype html>
           var wait = 150;
           if (next) {
             var gap = new Date(next.at).getTime() - new Date(events[index].at).getTime();
-            wait = Math.min(900, Math.max(150, gap / 40));
+            wait = Math.min(1100, Math.max(250, gap / 30));
           }
           index += 1;
           timer = setTimeout(step, wait);
         }
         step();
-        if (!document.getElementById('again')) {
-          var button = make('button', '', 'Replay');
-          button.id = 'again';
-          button.onclick = function () { replay(events); };
-          modeEl.appendChild(button);
-        }
+        var button = make('button', 'again', 'Replay');
+        button.type = 'button';
+        button.onclick = function () { replay(events); };
+        modeEl.appendChild(button);
       }
 
       fetch('events.json')

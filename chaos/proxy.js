@@ -1,17 +1,23 @@
 import http from 'node:http';
 
-export const SCENARIOS = ['none', 'error500', 'slow', 'timeout', 'garbage', 'empty', 'reset'];
+export const SCENARIOS = ['none', 'error500', 'slow', 'timeout', 'garbage', 'empty', 'reset', 'ghost'];
 
 const SLOW_DELAY_MS = 6000;
 const TIMEOUT_HOLD_MS = 30000;
 const FAULTED_PREFIX = '/api/';
+const ORDER_PATH = '/api/order';
 
 function sendText(res, status, contentType, body) {
   res.writeHead(status, { 'content-type': contentType, 'content-length': Buffer.byteLength(body) });
   res.end(body);
 }
 
-function forward(req, res, target) {
+/**
+ * Forwards a request upstream. With dropResponse the upstream still does its
+ * work, but the answer never reaches the client: the connection is cut once
+ * the upstream has replied.
+ */
+function forward(req, res, target, { dropResponse = false } = {}) {
   const upstream = http.request(
     {
       hostname: target.hostname,
@@ -21,6 +27,11 @@ function forward(req, res, target) {
       headers: { ...req.headers, host: target.host },
     },
     (upstreamRes) => {
+      if (dropResponse) {
+        upstreamRes.resume();
+        upstreamRes.on('end', () => req.socket.destroy());
+        return;
+      }
       res.writeHead(upstreamRes.statusCode ?? 502, upstreamRes.headers);
       upstreamRes.pipe(res);
     },
@@ -39,10 +50,22 @@ function forward(req, res, target) {
  * Fault-injecting reverse proxy. Only /api/ calls are faulted, so the page
  * still loads and the failure always happens inside the user's flow.
  * The active scenario is switched with POST /__chaos/scenario?name=<scenario>.
+ *
+ * The "ghost" scenario loses only the first order response: the backend saves
+ * the order, the shopper sees a failure, and a retry is what exposes duplicates.
  */
 export function createChaosProxy(targetUrl) {
   const target = new URL(targetUrl);
   let scenario = 'none';
+  let ghostArmed = false;
+
+  function select(name) {
+    if (!SCENARIOS.includes(name)) {
+      throw new Error(`unknown scenario: ${name}`);
+    }
+    scenario = name;
+    ghostArmed = name === 'ghost';
+  }
 
   const server = http.createServer((req, res) => {
     const url = new URL(req.url ?? '/', 'http://localhost');
@@ -54,7 +77,7 @@ export function createChaosProxy(targetUrl) {
           sendText(res, 400, 'application/json', JSON.stringify({ error: `unknown scenario: ${name}`, scenarios: SCENARIOS }));
           return;
         }
-        scenario = name;
+        select(name);
       }
       sendText(res, 200, 'application/json', JSON.stringify({ scenario, scenarios: SCENARIOS }));
       return;
@@ -88,17 +111,18 @@ export function createChaosProxy(targetUrl) {
         req.resume();
         setTimeout(() => req.socket.destroy(), TIMEOUT_HOLD_MS).unref();
         return;
+      case 'ghost':
+        if (ghostArmed && req.method === 'POST' && url.pathname === ORDER_PATH) {
+          ghostArmed = false;
+          forward(req, res, target, { dropResponse: true });
+          return;
+        }
+        forward(req, res, target);
+        return;
       default:
         forward(req, res, target);
     }
   });
 
-  function setScenario(name) {
-    if (!SCENARIOS.includes(name)) {
-      throw new Error(`unknown scenario: ${name}`);
-    }
-    scenario = name;
-  }
-
-  return { server, getScenario: () => scenario, setScenario };
+  return { server, getScenario: () => scenario, setScenario: select };
 }

@@ -30,10 +30,10 @@ async function setScenario(name) {
   assert(res.ok, `could not set scenario ${name}`);
 }
 
-async function postOrder() {
+async function postOrder(extraHeaders = {}) {
   return fetch(`${base}/api/order`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...extraHeaders },
     body: JSON.stringify(order),
     signal: AbortSignal.timeout(2000),
   });
@@ -85,7 +85,20 @@ try {
   assert(timedOut, 'timeout should not respond within 2s');
 
   assert(orders.length === 1, 'faulted calls must not create orders');
-  assert(SCENARIOS.length === 7, 'expected 7 scenarios');
+  assert(SCENARIOS.length === 8, 'expected 8 scenarios');
+
+  await setScenario('ghost');
+  let ghostDropped = false;
+  try {
+    await postOrder({ 'idempotency-key': 'smoke-key' });
+  } catch {
+    ghostDropped = true;
+  }
+  assert(ghostDropped, 'ghost should lose the first response');
+  assert(orders.length === 2, 'ghost should still save the first order');
+  const retry = await postOrder({ 'idempotency-key': 'smoke-key' });
+  assert(retry.status === 201, 'ghost retry should answer normally');
+  assert(orders.length === 2, 'a retry with the same idempotency key must not create a second order');
   console.log('smoke ok: proxy faults behave, ground truth holds');
 } finally {
   appServer.close();

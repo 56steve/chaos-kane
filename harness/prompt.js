@@ -6,6 +6,7 @@ const SCENARIO_MEANING = {
   garbage: 'the order API answers HTTP 200 with an HTML page instead of JSON',
   empty: 'the order API answers HTTP 200 with an empty body',
   reset: 'the connection to the order API is dropped',
+  ghost: 'the first order is saved by the backend but its response is lost, so the shopper sees a failure and retries',
 };
 
 function describeFailure(failure) {

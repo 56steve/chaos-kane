@@ -9,7 +9,9 @@
   },
   "scripts": {
     "start": "node src/dev.js",
-    "check": "node --check app/server.js && node --check app/client.js && node --check chaos/proxy.js && node --check src/dev.js",
-    "smoke": "node scripts/smoke.js"
+    "check": "node --check app/server.js && node --check app/client.js && node --check chaos/proxy.js && node --check src/dev.js && node --check harness/verdict.js && node --check harness/kane.js && node --check harness/report.js && node --check harness/run.js",
+    "test": "node --test \"harness/*.test.js\"",
+    "smoke": "node scripts/smoke.js",
+    "chaos": "node harness/run.js"
   }
 }

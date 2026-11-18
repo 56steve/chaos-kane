@@ -1,0 +1,165 @@
+{
+  "generatedAt": "2026-11-18T10:49:10.802Z",
+  "results": [
+    {
+      "scenario": "none",
+      "outcome": "survived",
+      "reasons": [
+        "order was saved and the shopper was told so"
+      ],
+      "statusMessage": "Order placed! Confirmation ORD-0001",
+      "requestStatus": "201",
+      "orderCreated": true,
+      "orderCount": 1,
+      "kaneExitCode": 0,
+      "credits": 65.63430899999999,
+      "agreement": "3/3",
+      "stable": true,
+      "runOutcomes": [
+        "survived",
+        "survived",
+        "survived"
+      ]
+    },
+    {
+      "scenario": "error500",
+      "outcome": "survived",
+      "reasons": [
+        "no order saved and the shopper saw a clear error: \"We couldn't place your order. Please try again.\""
+      ],
+      "statusMessage": "We couldn't place your order. Please try again.",
+      "requestStatus": "500",
+      "orderCreated": false,
+      "orderCount": 0,
+      "kaneExitCode": 0,
+      "credits": 55.5880335,
+      "agreement": "3/3",
+      "stable": true,
+      "runOutcomes": [
+        "survived",
+        "survived",
+        "survived"
+      ]
+    },
+    {
+      "scenario": "slow",
+      "outcome": "survived",
+      "reasons": [
+        "order was saved and the shopper was told so"
+      ],
+      "statusMessage": "Order placed! Confirmation ORD-0004",
+      "requestStatus": "201",
+      "orderCreated": true,
+      "orderCount": 1,
+      "kaneExitCode": 0,
+      "credits": 71.941878,
+      "agreement": "3/3",
+      "stable": true,
+      "runOutcomes": [
+        "survived",
+        "survived",
+        "survived"
+      ]
+    },
+    {
+      "scenario": "timeout",
+      "outcome": "survived",
+      "reasons": [
+        "no order saved and the shopper saw a clear error: \"We couldn't place your order. Please try again.\""
+      ],
+      "statusMessage": "We couldn't place your order. Please try again.",
+      "requestStatus": "no response",
+      "orderCreated": false,
+      "orderCount": 0,
+      "kaneExitCode": null,
+      "credits": 49.067378500000004,
+      "agreement": "3/3",
+      "stable": true,
+      "runOutcomes": [
+        "survived",
+        "survived",
+        "survived"
+      ]
+    },
+    {
+      "scenario": "garbage",
+      "outcome": "survived",
+      "reasons": [
+        "no order saved and the shopper saw a clear error: \"We couldn't place your order. Please try again.\""
+      ],
+      "statusMessage": "We couldn't place your order. Please try again.",
+      "requestStatus": "200",
+      "orderCreated": false,
+      "orderCount": 0,
+      "kaneExitCode": 0,
+      "credits": 54.9702405,
+      "agreement": "3/3",
+      "stable": true,
+      "runOutcomes": [
+        "survived",
+        "survived",
+        "survived"
+      ]
+    },
+    {
+      "scenario": "empty",
+      "outcome": "survived",
+      "reasons": [
+        "no order saved and the shopper saw a clear error: \"We couldn't place your order. Please try again.\""
+      ],
+      "statusMessage": "We couldn't place your order. Please try again.",
+      "requestStatus": "200",
+      "orderCreated": false,
+      "orderCount": 0,
+      "kaneExitCode": 0,
+      "credits": 62.415713000000004,
+      "agreement": "3/3",
+      "stable": true,
+      "runOutcomes": [
+        "survived",
+        "survived",
+        "survived"
+      ]
+    },
+    {
+      "scenario": "reset",
+      "outcome": "survived",
+      "reasons": [
+        "no order saved and the shopper saw a clear error: \"We couldn't place your order. Please try again.\""
+      ],
+      "statusMessage": "We couldn't place your order. Please try again.",
+      "requestStatus": "no response",
+      "orderCreated": false,
+      "orderCount": 0,
+      "kaneExitCode": 0,
+      "credits": 53.859989,
+      "agreement": "3/3",
+      "stable": true,
+      "runOutcomes": [
+        "survived",
+        "survived",
+        "survived"
+      ]
+    },
+    {
+      "scenario": "ghost",
+      "outcome": "survived",
+      "reasons": [
+        "order was saved and the shopper was told so"
+      ],
+      "statusMessage": "Order placed! Confirmation ORD-0007",
+      "requestStatus": "201",
+      "orderCreated": true,
+      "orderCount": 1,
+      "kaneExitCode": 0,
+      "credits": 77.946685,
+      "agreement": "3/3",
+      "stable": true,
+      "runOutcomes": [
+        "survived",
+        "survived",
+        "survived"
+      ]
+    }
+  ]
+}

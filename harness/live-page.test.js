@@ -385,3 +385,86 @@ test('readout heights and the headline are fixed so nothing below them moves', (
   assert.match(LIVE_PAGE, /\.value \{ min-height: 5\.6rem/);
   assert.match(LIVE_PAGE, /h1 \{[^}]*white-space: nowrap/);
 });
+
+const packetOf = (el) => el('wire').children.find((child) => child.attrs.class === 'packet');
+const motionFor = async (scenario) => {
+  const { el, send } = await startPage();
+  send(runStart({ scenarios: [scenario] }));
+  send({ type: 'scenario_start', scenario, run: 1, runs: 1 });
+  return { el, send, motion: packetOf(el)?.children[0]?.attrs };
+};
+
+test('the moving dot follows the real journey of the request in each scenario', async () => {
+  const expected = {
+    none: 'M160,36 L440,36 L440,56 L160,56',
+    error500: 'M160,36 L240,36 L240,56 L160,56',
+    garbage: 'M160,36 L240,36 L240,56 L160,56',
+    empty: 'M160,36 L240,36 L240,56 L160,56',
+    slow: 'M160,36 L440,36 L440,56 L160,56',
+    double: 'M160,36 L440,36 L440,56 L160,56',
+    timeout: 'M160,36 L240,36',
+    reset: 'M160,36 L200,36',
+    ghost: 'M160,36 L440,36 L440,56 L200,56',
+  };
+  for (const [scenario, path] of Object.entries(expected)) {
+    const { motion } = await motionFor(scenario);
+    assert.equal(motion.path, path, `${scenario} should follow ${path}`);
+  }
+});
+
+test('the dot never goes where the request does not: a server error never reaches the backend', async () => {
+  const { motion } = await motionFor('error500');
+  const xs = [...motion.path.matchAll(/[ML](\d+),/g)].map((match) => Number(match[1]));
+  assert.ok(Math.max(...xs) <= 240, 'the proxy answers itself, so the dot stops at the proxy and comes back');
+});
+
+test('a request that never gets a reply has no way back along the reply lane', async () => {
+  for (const scenario of ['timeout', 'reset']) {
+    const { motion } = await motionFor(scenario);
+    assert.doesNotMatch(motion.path, /,56/, `${scenario} should stay on the request lane`);
+  }
+});
+
+test('a lost reply goes all the way to the backend and dies at the cut on the way back', async () => {
+  const { motion } = await motionFor('ghost');
+  assert.match(motion.path, /L440,36 L440,56/);
+  assert.match(motion.path, /L200,56$/);
+});
+
+test('every journey has valid, matching timing data', async () => {
+  for (const scenario of ['none', 'error500', 'slow', 'timeout', 'garbage', 'empty', 'reset', 'ghost', 'double']) {
+    const { motion } = await motionFor(scenario);
+    const points = motion.keyPoints.split(';').map(Number);
+    const times = motion.keyTimes.split(';').map(Number);
+    assert.equal(points.length, times.length, `${scenario}: one time per point`);
+    assert.equal(points[0], 0);
+    assert.equal(points.at(-1), 1);
+    assert.equal(times[0], 0);
+    assert.equal(times.at(-1), 1);
+    assert.ok(times.every((time, index) => index === 0 || time >= times[index - 1]), `${scenario}: times never go backwards`);
+    assert.ok(points.every((point, index) => index === 0 || point >= points[index - 1]), `${scenario}: the dot never goes backwards on its path`);
+    assert.ok(Number.parseFloat(motion.dur) > 0);
+  }
+});
+
+test('a slow request makes the dot wait at the backend before the reply starts', async () => {
+  const { motion } = await motionFor('slow');
+  const points = motion.keyPoints.split(';').map(Number);
+  const times = motion.keyTimes.split(';').map(Number);
+  const heldAt = points.findIndex((point, index) => index > 0 && point === points[index - 1] && point > 0 && point < 1);
+  assert.ok(heldAt > 0, 'there is a pause on the way');
+  assert.ok(times[heldAt] - times[heldAt - 1] > 0.2, 'and it is a long pause, not a blip');
+});
+
+test('the dot only moves while a scenario is running', async () => {
+  const { el, send } = await startPage();
+  send(runStart());
+  send({ type: 'scenario_start', scenario: 'error500', run: 1, runs: 1 });
+  assert.ok(packetOf(el));
+  send(result({}));
+  assert.equal(packetOf(el), undefined);
+});
+
+test('people who prefer reduced motion do not get the moving dot', () => {
+  assert.match(LIVE_PAGE, /prefers-reduced-motion: reduce\) \{ \.item\.running \.dot \{ animation: none; \} \.packet \{ display: none; \} \}/);
+});

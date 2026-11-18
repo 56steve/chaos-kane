@@ -21,7 +21,7 @@ The evidence is committed in [reports/](reports/): `replay-before/` and `replay-
 
 In the first spike Kane was asked to pass or fail a fake-success checkout and it **passed it** ([docs/spike-findings.md](docs/spike-findings.md)). Told to extract the page text and the HTTP status of the write request, it reported both correctly. So Kane is the observer in a real browser, and [harness/verdict.js](harness/verdict.js) decides from three facts: what the user saw, what the request returned, and how many records the backend really stored.
 
-Every result is one of **survived**, **failed**, or **unable to verify**. A run that produced no usable evidence (Kane returned nothing, the fault never hit a request, no write reached the proxy) is *unable to verify*, never a pass.
+Every result is one of **survived**, **failed**, or **unable to verify**. The status of the write request is cross-checked: Kane reports it, and the browser's own network log (from Kane's evidence pack) is the authoritative value. If they ever disagree the result is *unable to verify*. Each run also keeps Kane's final screenshot, so the page that said "Order placed!" can be seen next to the HTTP 500 and the empty order list. A run that produced no usable evidence (Kane returned nothing, the fault never hit a request, no write reached the proxy) is *unable to verify*, never a pass.
 
 ## How it works
 
@@ -67,7 +67,7 @@ node bin/chaos-kane.js \
 
 ## Live dashboard
 
-`npm run live` starts the demo run with a live dashboard on `http://127.0.0.1:4200`: a small diagram of the request path (browser, proxy, backend) shows where each failure cut the request, with what the page said under the browser and what the backend saved under the backend. `npm run replay -- reports/replay/events.json` builds a static replay of a recorded run into `docs/` for static hosting.
+`npm run live` starts the demo run with a live dashboard on `http://127.0.0.1:4200`: a small diagram of the request path (browser, proxy, backend) shows where each failure cut the request, with what the page said under the browser and what the backend saved under the backend. The dashboard also shows Kane's screenshot of the page. `npm run replay -- before=reports/replay-before after=reports/replay-after` builds a static replay of the recorded before and after runs, with their screenshots, into `docs/` for static hosting.
 
 ## Run it
 
@@ -100,6 +100,7 @@ docs/       spike findings, CI example
 ## Limits
 
 - The demo is one small checkout flow; the tool has been exercised on that and on small fixtures, not on a third-party app.
+- Screenshots come from Kane's evidence pack and need `unzip` on the machine; without it runs still work, with no screenshot and no network-log cross-check (the status then comes from Kane alone).
 - The verdict reads the page text with wording patterns for success and error (`--claims` overrides them), so an unusual message could be misread.
 - Kane is an AI agent and can occasionally observe differently between runs; `--repeat` measures it. The `double` scenario relies on Kane double clicking.
 - The stop hook was tested by running it directly with a failing and a passing checkout, not yet inside a live Claude Code session.

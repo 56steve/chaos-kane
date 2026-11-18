@@ -7,6 +7,7 @@ const SCENARIO_MEANING = {
   empty: 'the order API answers HTTP 200 with an empty body',
   reset: 'the connection to the order API is dropped',
   ghost: 'the first order is saved by the backend but its response is lost, so the shopper sees a failure and retries',
+  double: 'the order API takes 2 seconds to answer while the shopper double clicks Place order',
 };
 
 function describeFailure(failure) {

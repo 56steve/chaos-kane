@@ -1,11 +1,13 @@
 import http from 'node:http';
+import https from 'node:https';
 
-export const SCENARIOS = ['none', 'error500', 'slow', 'timeout', 'garbage', 'empty', 'reset', 'ghost'];
+export const SCENARIOS = ['none', 'error500', 'slow', 'timeout', 'garbage', 'empty', 'reset', 'ghost', 'double'];
 
 const SLOW_DELAY_MS = 6000;
+const DOUBLE_DELAY_MS = 2000;
 const TIMEOUT_HOLD_MS = 30000;
-const DEFAULT_PREFIXES = ['/api/'];
-const DEFAULT_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
+export const DEFAULT_PREFIXES = ['/api/'];
+export const DEFAULT_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
 const FAULT_ACTION = {
   error500: 'answered HTTP 500',
@@ -15,7 +17,13 @@ const FAULT_ACTION = {
   empty: 'answered 200 with an empty body',
   reset: 'dropped the connection',
   ghost: 'let the backend save it, then lost the response',
+  double: 'held the reply for 2 seconds so a fast second click lands in flight',
 };
+
+/** Picks the transport for the upstream app: plain HTTP or HTTPS. */
+export function upstreamModule(target) {
+  return target.protocol === 'https:' ? https : http;
+}
 
 function sendText(res, status, contentType, body) {
   res.writeHead(status, { 'content-type': contentType, 'content-length': Buffer.byteLength(body) });
@@ -28,10 +36,11 @@ function sendText(res, status, contentType, body) {
  * reaches the client: the connection is cut once the upstream has replied.
  */
 function forward(req, res, target, { dropResponse = false, onUpstream = () => {} } = {}) {
-  const upstream = http.request(
+  const secure = target.protocol === 'https:';
+  const upstream = upstreamModule(target).request(
     {
       hostname: target.hostname,
-      port: target.port,
+      port: target.port || (secure ? 443 : 80),
       path: req.url,
       method: req.method,
       headers: { ...req.headers, host: target.host },
@@ -58,15 +67,19 @@ function forward(req, res, target, { dropResponse = false, onUpstream = () => {}
 }
 
 /**
- * Fault-injecting reverse proxy for any web app.
+ * Fault-injecting reverse proxy for any web app (HTTP or HTTPS upstream).
  *
  * Only requests whose path starts with one of `prefixes` and whose method is in
  * `methods` are faulted (by default mutating calls under /api/), so pages and
  * read requests still load and the failure always happens inside the user's flow.
  * The active scenario is switched with POST /__chaos/scenario?name=<scenario>.
  *
- * The "ghost" scenario loses only the first matching response: the backend saves
- * the change, the user sees a failure, and a retry is what exposes duplicates.
+ * The proxy only sees requests that go through it. An app whose frontend calls
+ * an API on a different origin bypasses it, which the harness reports as an
+ * incomplete result rather than a pass.
+ *
+ * - ghost: loses only the first matching response (backend saves, user sees a failure, a retry exposes duplicates).
+ * - double: holds every matching reply for 2 seconds so a fast double click lands while the first request is in flight.
  *
  * The proxy also counts mutations the backend accepted (2xx), which is the
  * evidence of last resort when an app has no truth endpoint.
@@ -148,6 +161,10 @@ export function createChaosProxy(targetUrl, options = {}) {
       case 'slow':
         announce();
         setTimeout(() => forwardTracked(req, res), SLOW_DELAY_MS).unref();
+        return;
+      case 'double':
+        announce();
+        setTimeout(() => forwardTracked(req, res), DOUBLE_DELAY_MS).unref();
         return;
       case 'timeout':
         announce();

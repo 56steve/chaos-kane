@@ -131,13 +131,14 @@ export const LIVE_PAGE = `<!doctype html>
       var NS = 'http://www.w3.org/2000/svg';
       var TITLES = {
         none: 'Healthy API', error500: 'Server error', slow: 'Slow server', timeout: 'No answer',
-        garbage: 'HTML, not JSON', empty: 'Empty reply', reset: 'Dropped', ghost: 'Reply lost'
+        garbage: 'HTML, not JSON', empty: 'Empty reply', reset: 'Dropped', ghost: 'Reply lost', double: 'Double click'
       };
       var NOTES = {
         none: 'passed everything through', error500: 'answered 500, never asked the backend',
         slow: 'held the reply for 6 seconds', timeout: 'never answered',
         garbage: 'answered 200 with an HTML page', empty: 'answered 200 with nothing',
-        reset: 'cut the connection', ghost: 'let the backend save it, then lost the reply'
+        reset: 'cut the connection', ghost: 'let the backend save it, then lost the reply',
+        double: 'held the reply for 2s while the user double clicked'
       };
       var WIRES = {
         none:     { a: 'ok',  b: 'ok',   c: 'ok',   d: 'ok' },
@@ -147,7 +148,8 @@ export const LIVE_PAGE = `<!doctype html>
         garbage:  { a: 'ok',  b: 'off',  c: 'off',  d: 'bad', tag: ['d', 'html'] },
         empty:    { a: 'ok',  b: 'off',  c: 'off',  d: 'bad', tag: ['d', 'empty'] },
         reset:    { a: 'cut', b: 'off',  c: 'off',  d: 'off' },
-        ghost:    { a: 'ok',  b: 'ok',   c: 'ok',   d: 'cut' }
+        ghost:    { a: 'ok',  b: 'ok',   c: 'ok',   d: 'cut' },
+        double:   { a: 'ok',  b: 'slow', c: 'slow', d: 'ok',  tag: ['b', '2s'] }
       };
       // a: browser to proxy, b: proxy to backend (requests, top lane); c: backend to proxy, d: proxy to browser (replies, bottom lane)
       var GEOM = {
@@ -237,7 +239,7 @@ export const LIVE_PAGE = `<!doctype html>
         });
         if (spec.tag) {
           var g2 = GEOM[spec.tag[0]];
-          var tag = svg('text', { x: (g2.x1 + g2.x2) / 2, y: g2.y + 17, 'class': 'tag' + (spec.tag[1] === '6s' ? ' slow' : '') }, wire);
+          var tag = svg('text', { x: (g2.x1 + g2.x2) / 2, y: g2.y + 17, 'class': 'tag' + (spec.tag[1] === '6s' || spec.tag[1] === '2s' ? ' slow' : '') }, wire);
           tag.textContent = spec.tag[1];
         }
         if (item.status === 'running') {

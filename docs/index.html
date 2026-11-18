@@ -107,6 +107,20 @@
     .fix .add { color: var(--ok); }
     .fix .del { color: var(--bad); }
     .fix .hunk { color: var(--muted); }
+    .phases { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; margin: 0.9rem 0 0; font: 0.75rem var(--mono); color: var(--faint); }
+    .phase { padding: 0.15rem 0; border-bottom: 2px solid transparent; }
+    .phase.done { color: var(--ok); }
+    .phase.active { color: var(--ink); font-weight: 700; border-bottom-color: var(--ink); }
+    .diag { margin-top: 1.25rem; }
+    .diag[hidden] { display: none; }
+    .diag h3 { margin: 0 0 0.35rem; font: 700 0.6875rem var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+    .diag ul { margin: 0; padding: 0; list-style: none; }
+    .diag li { padding: 0.5rem 0; border-top: 1px solid var(--line); }
+    .diag li b { color: var(--bad); }
+    .diag .names { display: block; margin-top: 0.1rem; color: var(--muted); font-size: 0.8125rem; }
+    .compare a.ghost { visibility: hidden; }
+    .compare.dim { visibility: hidden; }
+    .controls { margin-left: 0.5rem; }
     .now { margin-top: 1.1rem; min-height: 1.4em; font: 0.8125rem var(--mono); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .now.fault { color: var(--bad); font-weight: 700; }
 
@@ -136,6 +150,7 @@
     <div class="bar"><strong>chaos-kane</strong><span><span id="target"></span><span id="mode"></span></span></div>
     <h1 id="headline">Waiting for a run</h1>
     <p class="claim" id="claim"></p>
+    <div class="phases" id="phases" aria-label="Steps"></div>
 
     <div class="layout">
       <nav class="list" id="list" aria-label="Scenarios"></nav>
@@ -147,13 +162,13 @@
           <div class="col"><div class="label">Proxy did</div><div class="value mono" id="proxyNote"></div></div>
           <div class="col truth"><div class="label">Backend saved</div><div class="value big" id="count"></div></div>
         </div>
-        <a class="shot" id="shotLink" target="_blank" rel="noopener" hidden><span class="frame"><img id="shotImg" alt="Screenshot of the page Kane saw after the run" /></span><span>Kane's screenshot, click for full size</span></a>
         <div class="compare" id="compare" hidden>
           <div class="pair">
             <a id="cmpBeforeLink" target="_blank" rel="noopener"><span class="frame"><img id="cmpBeforeImg" alt="Screenshot of the page before the fix" /></span><span class="cap" id="cmpBeforeCap"></span></a>
             <a id="cmpAfterLink" target="_blank" rel="noopener"><span class="frame"><img id="cmpAfterImg" alt="Screenshot of the page after the fix" /></span><span class="cap" id="cmpAfterCap"></span></a>
           </div>
         </div>
+        <div class="diag" id="diag" hidden><h3>Diagnosis</h3><ul id="diagList"></ul></div>
         <div class="fix" id="fix" hidden><h3 id="fixTitle"></h3><pre id="fixBody"></pre></div>
         <div class="now" id="now"></div>
       </section>
@@ -196,8 +211,9 @@
       var targetEl = document.getElementById('target');
       var modeEl = document.getElementById('mode');
       var claimEl = document.getElementById('claim');
-      var shotLink = document.getElementById('shotLink');
-      var shotImg = document.getElementById('shotImg');
+      var phasesEl = document.getElementById('phases');
+      var diagEl = document.getElementById('diag');
+      var diagListEl = document.getElementById('diagList');
       var compareEl = document.getElementById('compare');
       var cmp = {
         before: { link: document.getElementById('cmpBeforeLink'), img: document.getElementById('cmpBeforeImg'), cap: document.getElementById('cmpBeforeCap') },
@@ -220,6 +236,10 @@
       var pinned = null;
       var hashPin = location.hash.indexOf('#s=') === 0 ? location.hash.slice(3) : null;
       var timer = null;
+      var lastWireSig = '';
+      var PHASES = ['Break', 'Observe', 'Diagnose', 'Fix', 'Verify'];
+      var phaseEls = {};
+      var shotsShown = false;
 
       function make(tag, cls, text) {
         var el = document.createElement(tag);
@@ -265,6 +285,9 @@
       function drawWire(scenario, item) {
         var spec = WIRES[scenario] || WIRES.none;
         var result = item.result;
+        var sig = scenario + '|' + item.status + '|' + (result ? result.outcome + ':' + (result.orderCount === undefined ? '' : result.orderCount) : '');
+        if (sig === lastWireSig) { return; }
+        lastWireSig = sig;
         wire.textContent = '';
         var count = result ? (result.orderCount === undefined ? (result.orderCreated ? 1 : 0) : result.orderCount) : null;
         var lie = result && result.outcome === 'failed';
@@ -297,14 +320,19 @@
       }
 
       function hideShots() {
-        shotLink.hidden = true;
-        compareEl.hidden = true;
+        if (shotsShown) {
+          compareEl.className = 'compare dim';
+        } else {
+          compareEl.hidden = true;
+        }
       }
 
-      function captionFor(label, result) {
-        var cap = cmp[label].cap;
+      function fillShot(side, result, label) {
+        var cap = cmp[side].cap;
+        cmp[side].img.src = result.screenshot;
+        cmp[side].link.href = result.screenshot;
         cap.textContent = '';
-        cap.appendChild(document.createTextNode((label === 'before' ? 'Before the fix' : 'After the fix') + ' \u00B7 '));
+        cap.appendChild(document.createTextNode(label + ' \u00B7 '));
         cap.appendChild(make('b', '', verdictOf(result)));
         cap.className = 'cap ' + (result.outcome === 'failed' ? 'bad' : (result.outcome === 'survived' ? 'good' : ''));
       }
@@ -313,23 +341,69 @@
         var before = history.before && history.before[name];
         var after = history.after && history.after[name];
         if (before && after && before.screenshot && after.screenshot) {
-          shotLink.hidden = true;
-          [['before', before], ['after', after]].forEach(function (pair) {
-            cmp[pair[0]].img.src = pair[1].screenshot;
-            cmp[pair[0]].link.href = pair[1].screenshot;
-            captionFor(pair[0], pair[1]);
-          });
-          compareEl.hidden = false;
+          fillShot('before', before, 'Before the fix');
+          fillShot('after', after, 'After the fix');
+          cmp.after.link.className = '';
+        } else if (result.screenshot) {
+          fillShot('before', result, "Kane's screenshot");
+          cmp.after.link.className = 'ghost';
+        } else {
+          hideShots();
           return;
         }
-        compareEl.hidden = true;
-        if (result.screenshot) {
-          shotImg.src = result.screenshot;
-          shotLink.href = result.screenshot;
-          shotLink.hidden = false;
-        } else {
-          shotLink.hidden = true;
-        }
+        shotsShown = true;
+        compareEl.hidden = false;
+        compareEl.className = 'compare';
+      }
+
+      function buildPhases() {
+        phasesEl.textContent = '';
+        PHASES.forEach(function (name) {
+          var span = make('span', 'phase', name);
+          phaseEls[name] = span;
+          phasesEl.appendChild(span);
+        });
+      }
+
+      function setPhase(name) {
+        var reached = false;
+        PHASES.forEach(function (phase) {
+          var el = phaseEls[phase];
+          if (phase === name) { el.className = 'phase active'; reached = true; }
+          else { el.className = 'phase' + (reached ? '' : ' done'); }
+        });
+      }
+
+      var DIAGNOSIS = [
+        ['fake success', 'Fake success', 'The page said the order worked, but the request failed and nothing was saved'],
+        ['duplicate', 'Duplicate order', 'A retry or double click created a second order'],
+        ['no error shown', 'Silent failure', 'The request failed and the page never told the user'],
+        ['unable to verify', 'Unable to verify', 'Not enough evidence to judge']
+      ];
+
+      function renderDiagnosis() {
+        var results = history[runLabel] || {};
+        var groups = {};
+        Object.keys(results).forEach(function (scenario) {
+          var result = results[scenario];
+          if (result.outcome === 'survived') { return; }
+          var word = verdictOf(result).replace('\u2260 ', '');
+          (groups[word] = groups[word] || []).push(title(scenario));
+        });
+        diagListEl.textContent = '';
+        var any = false;
+        DIAGNOSIS.forEach(function (entry) {
+          var names = groups[entry[0]];
+          if (!names) { return; }
+          any = true;
+          var li = make('li');
+          li.appendChild(make('b', '', names.length + ' \u00D7 ' + entry[1]));
+          li.appendChild(document.createTextNode(' ' + entry[2]));
+          li.appendChild(make('span', 'names', names.join(', ')));
+          diagListEl.appendChild(li);
+        });
+        diagEl.hidden = !any;
+        if (any && runLabel !== 'after') { setPhase('Diagnose'); }
       }
 
       function renderFix() {
@@ -399,6 +473,8 @@
           reset();
           runLabel = event.label || 'run';
           history[runLabel] = {};
+          diagEl.hidden = true;
+          setPhase(runLabel === 'after' ? 'Verify' : 'Break');
           noun = event.noun || 'record';
           targetEl.textContent = event.target;
           headlineEl.textContent = 'Breaking ' + event.target;
@@ -407,6 +483,7 @@
         } else if (event.type === 'scenario_start') {
           item = ensureItem(event.scenario);
           item.status = 'running';
+          setPhase(runLabel === 'after' ? 'Verify' : 'Observe');
           latest = event.scenario;
           headlineEl.textContent = 'Running: ' + title(event.scenario);
           say('Kane starts', '');
@@ -424,6 +501,7 @@
         } else if (event.type === 'fix') {
           fixInfo = event;
           renderFix();
+          setPhase('Fix');
         } else if (event.type === 'run_end') {
           var s = event.summary;
           headlineEl.className = s.failed === 0 && s.incomplete === 0 ? 'good' : 'bad';
@@ -435,6 +513,7 @@
             claimEl.className = 'claim ' + (event.claim.verdict === 'supported' ? 'good' : (event.claim.verdict === 'not supported' ? 'bad' : 'warn'));
           }
           say('', '');
+          renderDiagnosis();
         }
         render();
       }
@@ -445,33 +524,80 @@
         source.onmessage = function (message) { handle(JSON.parse(message.data)); };
       }
 
+      // Human pacing: long enough to read each result, the diagnosis and the fix.
+      function delayFor(event) {
+        switch (event.type) {
+          case 'run_start': return 1600;
+          case 'scenario_start': return 1100;
+          case 'fault': return 1400;
+          case 'kane_line': return 600;
+          case 'scenario_result': return 3500;
+          case 'run_end': return 5500;
+          case 'fix': return 6500;
+          default: return 600;
+        }
+      }
+
+      var paused = false;
+      var speed = 1;
+      var SPEEDS = [1, 2, 0.5];
+      var replayEvents = null;
+      var stepFn = null;
+      var controls = null;
+      var pauseBtn = null;
+      var speedBtn = null;
+
+      function buildControls() {
+        controls = make('span', 'controls');
+        pauseBtn = make('button', 'again', 'Pause');
+        speedBtn = make('button', 'again', '1x');
+        var againBtn = make('button', 'again', 'Replay');
+        [pauseBtn, speedBtn, againBtn].forEach(function (button) { button.type = 'button'; controls.appendChild(button); });
+        pauseBtn.onclick = function () {
+          paused = !paused;
+          pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+          if (paused) { if (timer) { clearTimeout(timer); } }
+          else if (stepFn) { stepFn(); }
+        };
+        speedBtn.onclick = function () {
+          speed = SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length];
+          speedBtn.textContent = speed + 'x';
+        };
+        againBtn.onclick = function () { replay(replayEvents); };
+      }
+
       function replay(events) {
         if (timer) { clearTimeout(timer); }
+        replayEvents = events;
+        paused = false;
         history = {};
         fixInfo = null;
         fixEl.hidden = true;
+        diagEl.hidden = true;
+        shotsShown = false;
+        compareEl.hidden = true;
         reset();
+        setPhase('Break');
+        events.forEach(function (event) {
+          if (event.screenshot) { var preload = new Image(); preload.src = event.screenshot; }
+        });
         modeEl.textContent = ' \u00B7 replay';
+        if (!controls) { buildControls(); }
+        pauseBtn.textContent = 'Pause';
+        modeEl.appendChild(controls);
         var index = 0;
-        function step() {
-          if (index >= events.length) { return; }
-          handle(events[index]);
-          var next = events[index + 1];
-          var wait = 150;
-          if (next) {
-            var gap = new Date(next.at).getTime() - new Date(events[index].at).getTime();
-            wait = Math.min(1100, Math.max(250, gap / 30));
-          }
+        stepFn = function () {
+          if (paused || index >= events.length) { return; }
+          var event = events[index];
+          handle(event);
           index += 1;
-          timer = setTimeout(step, wait);
-        }
-        step();
-        var button = make('button', 'again', 'Replay');
-        button.type = 'button';
-        button.onclick = function () { replay(events); };
-        modeEl.appendChild(button);
+          timer = setTimeout(stepFn, delayFor(event) / speed);
+        };
+        stepFn();
       }
 
+      buildPhases();
+      setPhase('Break');
       fetch('events.json')
         .then(function (response) { if (!response.ok) { throw new Error('no recording'); } return response.json(); })
         .then(replay)

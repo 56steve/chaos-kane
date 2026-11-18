@@ -1,5 +1,7 @@
 # chaos-kane
 
+![chaos-kane: result of the last recorded run](docs/badge.svg)
+
 An AI agent builds a checkout and says it handles API failures. **chaos-kane breaks the API with Kane CLI and shows what the user was really told, next to what the backend really did.**
 
 Built for the Kane CLI Online Hackathon by TestMu AI, with Claude Code as the coding agent.
@@ -67,7 +69,7 @@ node bin/chaos-kane.js \
 
 ## Live dashboard
 
-`npm run live` starts the demo run with a live dashboard on `http://127.0.0.1:4200`: a small diagram of the request path (browser, proxy, backend) shows where each failure cut the request, with what the page said under the browser and what the backend saved under the backend. The dashboard also shows Kane's screenshot of the page. `npm run replay -- before=reports/replay-before after=reports/replay-after` builds a static replay of the recorded before and after runs, with their screenshots, into `docs/` for static hosting.
+`npm run live` starts the demo run with a live dashboard on `http://127.0.0.1:4200`: a small diagram of the request path (browser, proxy, backend) shows where each failure cut the request, with what the page said under the browser and what the backend saved under the backend. The dashboard also shows Kane's screenshot of the page. In the replay, the same scenario from the before and the after run is shown side by side (the page saying "Order placed!" next to the page saying "We couldn't place your order"), and the fix itself is shown as a colored diff between the two runs. `npm run replay -- before=reports/replay-before after=reports/replay-after patch=app/client.js` builds a static replay of the recorded before and after runs, with their screenshots, into `docs/` for static hosting.
 
 ## Run it
 
@@ -81,6 +83,7 @@ npm test         # unit tests, no Kane needed
 npm run smoke    # proxy and backend checks, no Kane needed
 npm run chaos    # the demo shop through Kane, writes reports/latest.html
 npm run live     # the same run with the live dashboard
+npm run badge    # a status badge (docs/badge.svg) from the last recorded run
 node bin/chaos-kane.js --help
 ```
 

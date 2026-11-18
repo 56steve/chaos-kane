@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chaos Kane resilience report</title>
+  <style>
+    :root { color-scheme: light dark; --ok: #1a7f37; --bad: #cf222e; --warn: #9a6700; }
+    body { font-family: system-ui, sans-serif; max-width: 70rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.4; }
+    h1 { margin-bottom: 0.25rem; }
+    .score { font-size: 2.5rem; font-weight: 700; margin: 1rem 0 0.25rem; }
+    .muted { opacity: 0.7; }
+    table { border-collapse: collapse; width: 100%; margin-top: 1.5rem; }
+    th, td { text-align: left; padding: 0.5rem 0.6rem; border-bottom: 1px solid rgba(128,128,128,0.35); vertical-align: top; }
+    .badge { padding: 0.1rem 0.5rem; border-radius: 999px; font-size: 0.85rem; font-weight: 600; color: #fff; }
+    .badge.survived { background: var(--ok); }
+    .badge.failed { background: var(--bad); }
+    .badge.incomplete { background: var(--warn); }
+  </style>
+</head>
+<body>
+  <h1>Chaos Kane resilience report</h1>
+  <p class="muted">Generated 2026-11-18T11:03:04.247Z. Kane observes; the verdict comes from what the shopper saw compared with what the backend did.</p>
+  <div class="score">1 of 1 failures survived</div>
+  <p class="muted">Healthy baseline: survived &middot; failed: 0 &middot; incomplete: 0 &middot; Kane credits used: 40.8</p>
+  <table>
+    <thead><tr><th>Scenario</th><th>Verdict</th><th>Page said</th><th>Order request</th><th>Backend truth</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr class="survived">
+        <td><code>none</code></td>
+        <td><span class="badge survived">survived</span> <small class="muted">1/1</small></td>
+        <td>Order placed! Confirmation ORD-0003</td>
+        <td>201</td>
+        <td>order saved</td>
+        <td>order was saved and the user was told so</td>
+      </tr>
+      <tr class="survived">
+        <td><code>error500</code></td>
+        <td><span class="badge survived">survived</span> <small class="muted">1/1</small></td>
+        <td>We couldn't place your order. Please try again.</td>
+        <td>500</td>
+        <td>no order</td>
+        <td>no order saved and the user saw a clear error: &quot;We couldn't place your order. Please try again.&quot;</td>
+      </tr></tbody>
+  </table>
+</body>
+</html>

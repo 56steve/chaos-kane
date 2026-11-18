@@ -1,0 +1,43 @@
+{
+  "generatedAt": "2026-11-18T11:03:04.247Z",
+  "results": [
+    {
+      "scenario": "none",
+      "outcome": "survived",
+      "reasons": [
+        "order was saved and the user was told so"
+      ],
+      "statusMessage": "Order placed! Confirmation ORD-0003",
+      "requestStatus": "201",
+      "orderCreated": true,
+      "orderCount": 1,
+      "evidence": "proxy",
+      "kaneExitCode": 0,
+      "credits": 18.610059,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "survived"
+      ]
+    },
+    {
+      "scenario": "error500",
+      "outcome": "survived",
+      "reasons": [
+        "no order saved and the user saw a clear error: \"We couldn't place your order. Please try again.\""
+      ],
+      "statusMessage": "We couldn't place your order. Please try again.",
+      "requestStatus": "500",
+      "orderCreated": false,
+      "orderCount": 0,
+      "evidence": "proxy",
+      "kaneExitCode": 0,
+      "credits": 22.175445,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "survived"
+      ]
+    }
+  ]
+}

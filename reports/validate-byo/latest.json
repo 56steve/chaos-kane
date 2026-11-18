@@ -1,0 +1,62 @@
+{
+  "generatedAt": "2026-11-18T10:59:23.213Z",
+  "results": [
+    {
+      "scenario": "none",
+      "outcome": "survived",
+      "reasons": [
+        "order was saved and the user was told so"
+      ],
+      "statusMessage": "Order placed! Confirmation ORD-0001",
+      "requestStatus": "201",
+      "orderCreated": true,
+      "orderCount": 1,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 19.23019,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "survived"
+      ]
+    },
+    {
+      "scenario": "error500",
+      "outcome": "survived",
+      "reasons": [
+        "no order saved and the user saw a clear error: \"We couldn't place your order. Please try again.\""
+      ],
+      "statusMessage": "We couldn't place your order. Please try again.",
+      "requestStatus": "500",
+      "orderCreated": false,
+      "orderCount": 0,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 25.325575,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "survived"
+      ]
+    },
+    {
+      "scenario": "ghost",
+      "outcome": "survived",
+      "reasons": [
+        "order was saved and the user was told so"
+      ],
+      "statusMessage": "Order placed! Confirmation ORD-0002",
+      "requestStatus": "201",
+      "orderCreated": true,
+      "orderCount": 1,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 26.031715,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "survived"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "generatedAt": "2026-11-18T11:08:55.694Z",
+  "results": [
+    {
+      "scenario": "error500",
+      "outcome": "failed",
+      "reasons": [
+        "fake success: page says \"Order placed! Confirmation pending\" but the backend has no order (request returned HTTP 500)"
+      ],
+      "statusMessage": "Order placed! Confirmation pending",
+      "requestStatus": "500",
+      "orderCreated": false,
+      "orderCount": 0,
+      "evidence": "proxy",
+      "kaneExitCode": 0,
+      "credits": 25.977093,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "failed"
+      ]
+    }
+  ]
+}

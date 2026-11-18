@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-18T08:57:50.443Z",
+  "generatedAt": "2026-11-18T09:42:11.452Z",
   "results": [
     {
       "scenario": "none",
@@ -11,19 +11,19 @@
       "requestStatus": "201",
       "orderCreated": true,
       "kaneExitCode": 0,
-      "credits": 26.210010000000004
+      "credits": 22.2936725
     },
     {
       "scenario": "error500",
-      "outcome": "failed",
+      "outcome": "survived",
       "reasons": [
-        "fake success: page says \"Order placed! Confirmation pending\" but the backend has no order (order request returned HTTP 500)"
+        "no order saved and the shopper saw a clear error: \"We couldn't place your order. Please try again.\""
       ],
-      "statusMessage": "Order placed! Confirmation pending",
+      "statusMessage": "We couldn't place your order. Please try again.",
       "requestStatus": "500",
       "orderCreated": false,
       "kaneExitCode": 0,
-      "credits": 17.2335975
+      "credits": 19.2835875
     },
     {
       "scenario": "slow",
@@ -35,55 +35,55 @@
       "requestStatus": "201",
       "orderCreated": true,
       "kaneExitCode": 0,
-      "credits": 18.5388435
+      "credits": 23.12869
     },
     {
       "scenario": "timeout",
-      "outcome": "failed",
+      "outcome": "survived",
       "reasons": [
-        "no order saved and no clear error shown; page says \"Placing order...\" (order request got no HTTP status)"
+        "no order saved and the shopper saw a clear error: \"We couldn't place your order. Please try again.\""
       ],
-      "statusMessage": "Placing order...",
+      "statusMessage": "We couldn't place your order. Please try again.",
       "requestStatus": "no response",
       "orderCreated": false,
       "kaneExitCode": 0,
-      "credits": 16.100712499999997
+      "credits": 19.953408
     },
     {
       "scenario": "garbage",
-      "outcome": "failed",
+      "outcome": "survived",
       "reasons": [
-        "fake success: page says \"Order placed! Confirmation pending\" but the backend has no order (order request returned HTTP 200)"
+        "no order saved and the shopper saw a clear error: \"We couldn't place your order. Please try again.\""
       ],
-      "statusMessage": "Order placed! Confirmation pending",
+      "statusMessage": "We couldn't place your order. Please try again.",
       "requestStatus": "200",
       "orderCreated": false,
       "kaneExitCode": 0,
-      "credits": 19.175592
+      "credits": 14.680807999999997
     },
     {
       "scenario": "empty",
-      "outcome": "failed",
+      "outcome": "survived",
       "reasons": [
-        "fake success: page says \"Order placed! Confirmation pending\" but the backend has no order (order request returned HTTP 200)"
+        "no order saved and the shopper saw a clear error: \"We couldn't place your order. Please try again.\""
       ],
-      "statusMessage": "Order placed! Confirmation pending",
+      "statusMessage": "We couldn't place your order. Please try again.",
       "requestStatus": "200",
       "orderCreated": false,
       "kaneExitCode": 0,
-      "credits": 23.300063
+      "credits": 25.4692775
     },
     {
       "scenario": "reset",
-      "outcome": "failed",
+      "outcome": "survived",
       "reasons": [
-        "fake success: page says \"Order placed! Confirmation pending\" but the backend has no order (order request got no HTTP status)"
+        "no order saved and the shopper saw a clear error: \"We couldn't place your order. Please try again.\""
       ],
-      "statusMessage": "Order placed! Confirmation pending",
+      "statusMessage": "We couldn't place your order. Please try again.",
       "requestStatus": "no response",
       "orderCreated": false,
       "kaneExitCode": 0,
-      "credits": 18.3507925
+      "credits": 19.874161999999995
     }
   ]
 }

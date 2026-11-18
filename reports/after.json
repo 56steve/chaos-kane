@@ -1,0 +1,89 @@
+{
+  "generatedAt": "2026-11-18T09:42:11.452Z",
+  "results": [
+    {
+      "scenario": "none",
+      "outcome": "survived",
+      "reasons": [
+        "order was saved and the shopper was told so"
+      ],
+      "statusMessage": "Order placed! Confirmation ORD-0001",
+      "requestStatus": "201",
+      "orderCreated": true,
+      "kaneExitCode": 0,
+      "credits": 22.2936725
+    },
+    {
+      "scenario": "error500",
+      "outcome": "survived",
+      "reasons": [
+        "no order saved and the shopper saw a clear error: \"We couldn't place your order. Please try again.\""
+      ],
+      "statusMessage": "We couldn't place your order. Please try again.",
+      "requestStatus": "500",
+      "orderCreated": false,
+      "kaneExitCode": 0,
+      "credits": 19.2835875
+    },
+    {
+      "scenario": "slow",
+      "outcome": "survived",
+      "reasons": [
+        "order was saved and the shopper was told so"
+      ],
+      "statusMessage": "Order placed! Confirmation ORD-0002",
+      "requestStatus": "201",
+      "orderCreated": true,
+      "kaneExitCode": 0,
+      "credits": 23.12869
+    },
+    {
+      "scenario": "timeout",
+      "outcome": "survived",
+      "reasons": [
+        "no order saved and the shopper saw a clear error: \"We couldn't place your order. Please try again.\""
+      ],
+      "statusMessage": "We couldn't place your order. Please try again.",
+      "requestStatus": "no response",
+      "orderCreated": false,
+      "kaneExitCode": 0,
+      "credits": 19.953408
+    },
+    {
+      "scenario": "garbage",
+      "outcome": "survived",
+      "reasons": [
+        "no order saved and the shopper saw a clear error: \"We couldn't place your order. Please try again.\""
+      ],
+      "statusMessage": "We couldn't place your order. Please try again.",
+      "requestStatus": "200",
+      "orderCreated": false,
+      "kaneExitCode": 0,
+      "credits": 14.680807999999997
+    },
+    {
+      "scenario": "empty",
+      "outcome": "survived",
+      "reasons": [
+        "no order saved and the shopper saw a clear error: \"We couldn't place your order. Please try again.\""
+      ],
+      "statusMessage": "We couldn't place your order. Please try again.",
+      "requestStatus": "200",
+      "orderCreated": false,
+      "kaneExitCode": 0,
+      "credits": 25.4692775
+    },
+    {
+      "scenario": "reset",
+      "outcome": "survived",
+      "reasons": [
+        "no order saved and the shopper saw a clear error: \"We couldn't place your order. Please try again.\""
+      ],
+      "statusMessage": "We couldn't place your order. Please try again.",
+      "requestStatus": "no response",
+      "orderCreated": false,
+      "kaneExitCode": 0,
+      "credits": 19.874161999999995
+    }
+  ]
+}

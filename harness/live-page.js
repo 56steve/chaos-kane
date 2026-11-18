@@ -94,6 +94,23 @@ export const LIVE_PAGE = `<!doctype html>
     .shot .frame { position: relative; display: block; overflow: hidden; aspect-ratio: 11 / 6; border: 1px solid var(--line); border-radius: 0.4rem; margin-bottom: 0.35rem; background: #fff; }
     .shot img { position: absolute; top: 0; left: 50%; width: 250%; max-width: none; transform: translateX(-50%); }
     .shot:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+    .compare { margin-top: 1.1rem; }
+    .compare[hidden] { display: none; }
+    .compare .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .compare a { display: block; color: var(--muted); font: 0.75rem var(--mono); text-decoration: none; }
+    .compare a:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+    .compare .frame { position: relative; display: block; overflow: hidden; aspect-ratio: 6 / 5; border: 1px solid var(--line); border-radius: 0.4rem; margin-bottom: 0.35rem; background: #fff; }
+    .compare img { position: absolute; top: 0; left: 50%; width: 400%; max-width: none; transform: translateX(-50%); }
+    .compare .cap b { color: var(--ink); }
+    .compare .cap.bad b { color: var(--bad); }
+    .compare .cap.good b { color: var(--ok); }
+    .fix { margin-top: 1.25rem; }
+    .fix[hidden] { display: none; }
+    .fix h3 { margin: 0 0 0.35rem; font: 700 0.6875rem var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+    .fix pre { margin: 0; max-height: 13rem; overflow: auto; padding: 0.6rem 0.75rem; border: 1px solid var(--line); border-radius: 0.4rem; background: #fff9; font: 0.75rem/1.5 var(--mono); }
+    .fix .add { color: var(--ok); }
+    .fix .del { color: var(--bad); }
+    .fix .hunk { color: var(--muted); }
     .now { margin-top: 1.1rem; min-height: 1.4em; font: 0.8125rem var(--mono); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .now.fault { color: var(--bad); font-weight: 700; }
 
@@ -105,6 +122,7 @@ export const LIVE_PAGE = `<!doctype html>
     @keyframes travel { 0% { transform: translateX(0); opacity: 1; } 85% { opacity: 1; } 100% { transform: translateX(280px); opacity: 0; } }
     @media (prefers-reduced-motion: reduce) { .item.running .dot, .packet { animation: none; } }
     @media (max-width: 720px) {
+      .compare .pair { grid-template-columns: 1fr; }
       h1 { margin: 1.1rem 0 1rem; font-size: 1.6rem; }
       .bar { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
       .layout { grid-template-columns: 1fr; gap: 1rem; }
@@ -134,6 +152,13 @@ export const LIVE_PAGE = `<!doctype html>
           <div class="col truth"><div class="label">Backend saved</div><div class="value big" id="count"></div></div>
         </div>
         <a class="shot" id="shotLink" target="_blank" rel="noopener" hidden><span class="frame"><img id="shotImg" alt="Screenshot of the page Kane saw after the run" /></span><span>Kane's screenshot, click for full size</span></a>
+        <div class="compare" id="compare" hidden>
+          <div class="pair">
+            <a id="cmpBeforeLink" target="_blank" rel="noopener"><span class="frame"><img id="cmpBeforeImg" alt="Screenshot of the page before the fix" /></span><span class="cap" id="cmpBeforeCap"></span></a>
+            <a id="cmpAfterLink" target="_blank" rel="noopener"><span class="frame"><img id="cmpAfterImg" alt="Screenshot of the page after the fix" /></span><span class="cap" id="cmpAfterCap"></span></a>
+          </div>
+        </div>
+        <div class="fix" id="fix" hidden><h3 id="fixTitle"></h3><pre id="fixBody"></pre></div>
         <div class="now" id="now"></div>
       </section>
     </div>
@@ -177,6 +202,17 @@ export const LIVE_PAGE = `<!doctype html>
       var claimEl = document.getElementById('claim');
       var shotLink = document.getElementById('shotLink');
       var shotImg = document.getElementById('shotImg');
+      var compareEl = document.getElementById('compare');
+      var cmp = {
+        before: { link: document.getElementById('cmpBeforeLink'), img: document.getElementById('cmpBeforeImg'), cap: document.getElementById('cmpBeforeCap') },
+        after: { link: document.getElementById('cmpAfterLink'), img: document.getElementById('cmpAfterImg'), cap: document.getElementById('cmpAfterCap') }
+      };
+      var fixEl = document.getElementById('fix');
+      var fixTitleEl = document.getElementById('fixTitle');
+      var fixBodyEl = document.getElementById('fixBody');
+      var history = {};
+      var runLabel = 'run';
+      var fixInfo = null;
       var stageEl = document.getElementById('stage');
       var els = {};
       ['stageTitle', 'verdict', 'said', 'proxyNote', 'count'].forEach(function (id) { els[id] = document.getElementById(id); });
@@ -264,6 +300,53 @@ export const LIVE_PAGE = `<!doctype html>
         }
       }
 
+      function hideShots() {
+        shotLink.hidden = true;
+        compareEl.hidden = true;
+      }
+
+      function captionFor(label, result) {
+        var cap = cmp[label].cap;
+        cap.textContent = '';
+        cap.appendChild(document.createTextNode((label === 'before' ? 'Before the fix' : 'After the fix') + ' \\u00B7 '));
+        cap.appendChild(make('b', '', verdictOf(result)));
+        cap.className = 'cap ' + (result.outcome === 'failed' ? 'bad' : (result.outcome === 'survived' ? 'good' : ''));
+      }
+
+      function showShots(name, result) {
+        var before = history.before && history.before[name];
+        var after = history.after && history.after[name];
+        if (before && after && before.screenshot && after.screenshot) {
+          shotLink.hidden = true;
+          [['before', before], ['after', after]].forEach(function (pair) {
+            cmp[pair[0]].img.src = pair[1].screenshot;
+            cmp[pair[0]].link.href = pair[1].screenshot;
+            captionFor(pair[0], pair[1]);
+          });
+          compareEl.hidden = false;
+          return;
+        }
+        compareEl.hidden = true;
+        if (result.screenshot) {
+          shotImg.src = result.screenshot;
+          shotLink.href = result.screenshot;
+          shotLink.hidden = false;
+        } else {
+          shotLink.hidden = true;
+        }
+      }
+
+      function renderFix() {
+        if (!fixInfo) { fixEl.hidden = true; return; }
+        fixTitleEl.textContent = 'Agent fix \\u00B7 ' + fixInfo.file;
+        fixBodyEl.textContent = '';
+        (fixInfo.lines || []).forEach(function (line) {
+          var kind = line.charAt(0) === '+' ? 'add' : (line.charAt(0) === '-' ? 'del' : (line.charAt(0) === '@' ? 'hunk' : ''));
+          fixBodyEl.appendChild(make('span', kind, line + '\\n'));
+        });
+        fixEl.hidden = false;
+      }
+
       function ensureItem(scenario) {
         if (data[scenario]) { return data[scenario]; }
         var button = make('button', 'item');
@@ -285,7 +368,7 @@ export const LIVE_PAGE = `<!doctype html>
         });
         if (!name || !data[name]) {
           stageEl.className = 'stage';
-          shotLink.hidden = true;
+          hideShots();
           return;
         }
         var item = data[name];
@@ -304,15 +387,9 @@ export const LIVE_PAGE = `<!doctype html>
           }
           els.count.textContent = String(count);
           els.count.appendChild(make('small', '', noun + (count === 1 ? '' : 's')));
-          if (result.screenshot) {
-            shotImg.src = result.screenshot;
-            shotLink.href = result.screenshot;
-            shotLink.hidden = false;
-          } else {
-            shotLink.hidden = true;
-          }
+          showShots(name, result);
         } else {
-          shotLink.hidden = true;
+          hideShots();
           stageEl.className = 'stage';
           els.verdict.textContent = item.status === 'running' ? 'kane is on it' : '';
           els.said.textContent = item.status === 'running' ? '...' : '';
@@ -324,6 +401,8 @@ export const LIVE_PAGE = `<!doctype html>
         var item;
         if (event.type === 'run_start') {
           reset();
+          runLabel = event.label || 'run';
+          history[runLabel] = {};
           noun = event.noun || 'record';
           targetEl.textContent = event.target;
           headlineEl.textContent = 'Breaking ' + event.target;
@@ -343,8 +422,12 @@ export const LIVE_PAGE = `<!doctype html>
           item = ensureItem(event.scenario);
           item.status = event.outcome;
           item.result = event;
+          (history[runLabel] = history[runLabel] || {})[event.scenario] = event;
           latest = event.scenario;
           say('', '');
+        } else if (event.type === 'fix') {
+          fixInfo = event;
+          renderFix();
         } else if (event.type === 'run_end') {
           var s = event.summary;
           headlineEl.className = s.failed === 0 && s.incomplete === 0 ? 'good' : 'bad';
@@ -368,6 +451,9 @@ export const LIVE_PAGE = `<!doctype html>
 
       function replay(events) {
         if (timer) { clearTimeout(timer); }
+        history = {};
+        fixInfo = null;
+        fixEl.hidden = true;
         reset();
         modeEl.textContent = ' \\u00B7 replay';
         var index = 0;

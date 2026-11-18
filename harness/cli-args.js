@@ -9,6 +9,7 @@ const VALUE_FLAGS = new Set([
   'fault-methods',
   'truth-url',
   'noun',
+  'claims',
   'repeat',
   'proxy-port',
   'dashboard-port',
@@ -107,6 +108,15 @@ export function parseArgs(argv, env = {}) {
     requireUrl('--truth-url', truthUrl);
   }
 
+  const claims = raw.get('claims');
+  if (claims) {
+    try {
+      new RegExp(claims, 'i');
+    } catch {
+      throw new Error(`--claims must be a valid regular expression, got "${claims}"`);
+    }
+  }
+
   return {
     help: false,
     demo,
@@ -117,6 +127,7 @@ export function parseArgs(argv, env = {}) {
     faultMethods: splitList(raw.get('fault-methods') ?? 'POST,PUT,PATCH,DELETE').map((method) => method.toUpperCase()),
     truthUrl,
     noun: raw.get('noun') ?? (demo ? 'order' : 'record'),
+    claims,
     repeat: requireInteger('--repeat', raw.get('repeat') ?? 1, 1),
     proxyPort: requireInteger('--proxy-port', raw.get('proxy-port') ?? 4100, 1),
     dashboardPort: requireInteger('--dashboard-port', raw.get('dashboard-port') ?? 4200, 1),

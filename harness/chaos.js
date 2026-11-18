@@ -1,11 +1,12 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { createApp } from '../app/server.js';
-import { createChaosProxy, SCENARIOS } from '../chaos/proxy.js';
+import { DEFAULT_METHODS, DEFAULT_PREFIXES, createChaosProxy, SCENARIOS } from '../chaos/proxy.js';
 import { aggregateRuns } from './aggregate.js';
 import { createHub } from './hub.js';
 import { runKane } from './kane.js';
 import { renderReport, summarize } from './report.js';
+import { applyFaultCheck } from './validity.js';
 import { judge } from './verdict.js';
 
 export const APP_PORT = Number(process.env.APP_PORT ?? 4000);
@@ -17,15 +18,22 @@ export const DEMO_FLOW =
 const WAIT = 'Wait up to 10 seconds for the page to react.';
 const RETRY_ONCE =
   'If the page says there was a problem, repeat the same final action once more and wait up to 10 seconds again.';
+const DOUBLE_CLICK =
+  'Do not click that last button once: click it twice in very quick succession, two clicks within half a second.';
 const RECORD =
   "Store the exact text of the confirmation or error message the page shows at the end as 'status_message' (store 'none' if there is none). Store the HTTP status code of the last request the page made that saved or changed data (a POST, PUT, PATCH or DELETE) as 'last_request_status' (store 'no response' if that request got no response). Do not judge the result. Only record these two values.";
 
 /**
  * Builds the Kane objective for one scenario. The ghost scenario adds a retry,
- * because duplicates only appear when the user tries again.
+ * because duplicates only appear when the user tries again; the double scenario
+ * asks for a fast double click for the same reason.
  */
 export function objectiveFor(flow, scenario) {
-  const parts = [flow, WAIT];
+  const parts = [flow];
+  if (scenario === 'double') {
+    parts.push(DOUBLE_CLICK);
+  }
+  parts.push(WAIT);
   if (scenario === 'ghost') {
     parts.push(RETRY_ONCE);
   }
@@ -68,9 +76,10 @@ function feedText(line) {
 }
 
 async function runScenario({ scenario, runIndex, runs, ctx }) {
-  const { proxy, truth, flow, noun, outDir, proxyPort, hub } = ctx;
+  const { proxy, truth, flow, noun, outDir, proxyPort, hub, successPattern, rules, faultsFired } = ctx;
   proxy.setScenario(scenario);
   proxy.resetAccepted();
+  const firedBefore = faultsFired();
   hub.emit({ type: 'scenario_start', scenario, run: runIndex, runs });
 
   const before = truth ? await truth.count() : 0;
@@ -91,7 +100,15 @@ async function runScenario({ scenario, runIndex, runs, ctx }) {
 
   const { statusMessage, requestStatus } = readObservation(kane.runEnd?.final_state);
   // Duplicate detection needs a real backend count; the proxy's count of accepted calls can include idempotent replays.
-  const verdict = judge({ statusMessage, requestStatus, orderCreated, orderCount: truth ? orderCount : undefined, noun });
+  const judged = judge({
+    statusMessage,
+    requestStatus,
+    orderCreated,
+    orderCount: truth ? orderCount : undefined,
+    noun,
+    successPattern,
+  });
+  const verdict = applyFaultCheck(judged, scenario, faultsFired() - firedBefore, rules);
 
   return {
     scenario,
@@ -123,6 +140,7 @@ export async function runChaosAgainst({
   truth = null,
   noun = 'order',
   proxyOptions = {},
+  successPattern = undefined,
   hub = createHub(),
   onProgress = () => {},
 }) {
@@ -135,11 +153,21 @@ export async function runChaosAgainst({
   }
   await mkdir(outDir, { recursive: true });
 
-  const proxy = createChaosProxy(appUrl, { ...proxyOptions, onEvent: (event) => hub.emit(event) });
+  let faultCount = 0;
+  const proxy = createChaosProxy(appUrl, {
+    ...proxyOptions,
+    onEvent: (event) => {
+      if (event.type === 'fault') {
+        faultCount += 1;
+      }
+      hub.emit(event);
+    },
+  });
   await listen(proxy.server, proxyPort);
   hub.emit({ type: 'run_start', scenarios, repeat, target: appUrl, flow, noun });
 
-  const ctx = { proxy, truth, flow, noun, outDir, proxyPort, hub };
+  const rules = { prefixes: proxyOptions.prefixes ?? DEFAULT_PREFIXES, methods: proxyOptions.methods ?? DEFAULT_METHODS };
+  const ctx = { proxy, truth, flow, noun, outDir, proxyPort, hub, successPattern, rules, faultsFired: () => faultCount };
   const results = [];
   try {
     for (const scenario of scenarios) {

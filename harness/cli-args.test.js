@@ -56,6 +56,16 @@ test('fault paths and methods are normalised', () => {
   assert.deepEqual(config.faultMethods, ['POST', 'PUT']);
 });
 
+test('--claims takes a regular expression and rejects an invalid one', () => {
+  assert.equal(parseArgs(['--demo', '--claims', 'all set|booked']).claims, 'all set|booked');
+  assert.equal(parseArgs(['--demo']).claims, undefined);
+  assert.throws(() => parseArgs(['--demo', '--claims', '(unclosed']), /--claims/);
+});
+
+test('every fault scenario, including double, is accepted', () => {
+  assert.deepEqual(parseArgs(['--demo', '--faults', 'double,ghost']).faults, ['double', 'ghost']);
+});
+
 test('help short circuits validation', () => {
   assert.equal(parseArgs(['--help']).help, true);
 });

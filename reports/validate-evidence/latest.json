@@ -1,0 +1,95 @@
+{
+  "generatedAt": "2026-11-18T13:13:29.771Z",
+  "results": [
+    {
+      "scenario": "none",
+      "outcome": "survived",
+      "reasons": [
+        "order was saved and the user was told so"
+      ],
+      "statusMessage": "Order placed! Confirmation ORD-0001",
+      "requestStatus": "201",
+      "statusSource": "network-log",
+      "crossCheck": "agreed",
+      "kaneReportedStatus": "201",
+      "network": [
+        {
+          "method": "POST",
+          "path": "/api/order",
+          "status": 201
+        }
+      ],
+      "screenshot": "evidence/none-1.jpg",
+      "orderCreated": true,
+      "orderCount": 1,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 21.614420000000003,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "survived"
+      ]
+    },
+    {
+      "scenario": "error500",
+      "outcome": "survived",
+      "reasons": [
+        "no order saved and the user saw a clear error: \"We couldn't place your order. Please try again.\""
+      ],
+      "statusMessage": "We couldn't place your order. Please try again.",
+      "requestStatus": "500",
+      "statusSource": "network-log",
+      "crossCheck": "agreed",
+      "kaneReportedStatus": "500",
+      "network": [
+        {
+          "method": "POST",
+          "path": "/api/order",
+          "status": 500
+        }
+      ],
+      "screenshot": "evidence/error500-1.jpg",
+      "orderCreated": false,
+      "orderCount": 0,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 17.8378125,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "survived"
+      ]
+    },
+    {
+      "scenario": "reset",
+      "outcome": "survived",
+      "reasons": [
+        "no order saved and the user saw a clear error: \"We couldn't place your order. Please try again.\""
+      ],
+      "statusMessage": "We couldn't place your order. Please try again.",
+      "requestStatus": "no response",
+      "statusSource": "network-log",
+      "crossCheck": "agreed",
+      "kaneReportedStatus": "no response",
+      "network": [
+        {
+          "method": "POST",
+          "path": "/api/order",
+          "status": 0
+        }
+      ],
+      "screenshot": "evidence/reset-1.jpg",
+      "orderCreated": false,
+      "orderCount": 0,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 19.437482499999998,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "survived"
+      ]
+    }
+  ]
+}

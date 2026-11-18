@@ -60,6 +60,29 @@ test('a retry that ends with exactly one order and a success message survives', 
   assert.equal(result.outcome, 'survived');
 });
 
+test('the noun appears in the reasons so other apps read naturally', () => {
+  const result = judge({ statusMessage: 'Booking saved!', requestStatus: '500', orderCreated: false, noun: 'booking' });
+  assert.equal(result.outcome, 'failed');
+  assert.match(result.reasons.join(' '), /fake success/);
+  assert.match(result.reasons.join(' '), /no booking/);
+});
+
+test('a custom success pattern decides what counts as a success claim', () => {
+  const result = judge({
+    statusMessage: 'All set, see you soon',
+    requestStatus: '500',
+    orderCreated: false,
+    successPattern: /all set/i,
+  });
+  assert.equal(result.outcome, 'failed');
+  assert.match(result.reasons.join(' '), /fake success/);
+});
+
+test('generic success wording is recognised without a custom pattern', () => {
+  const result = judge({ statusMessage: 'Saved!', requestStatus: '201', orderCreated: true });
+  assert.equal(result.outcome, 'survived');
+});
+
 test('parseStatusCode reads numeric strings and rejects the rest', () => {
   assert.equal(parseStatusCode('500'), 500);
   assert.equal(parseStatusCode(201), 201);

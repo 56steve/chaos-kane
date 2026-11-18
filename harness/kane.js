@@ -29,7 +29,7 @@ export function extractRunEnd(ndjson) {
  * Runs one Kane objective in agent mode and returns the raw stream plus the
  * parsed run_end record. Never throws on a failed run; the caller decides.
  */
-export function runKane({ objective, url, maxSteps = 15, timeoutSec = 180 }) {
+export function runKane({ objective, url, maxSteps = 15, timeoutSec = 180, onLine = () => {} }) {
   return new Promise((resolve, reject) => {
     const args = [
       'run',
@@ -47,8 +47,15 @@ export function runKane({ objective, url, maxSteps = 15, timeoutSec = 180 }) {
 
     let stdout = '';
     let stderr = '';
+    let pending = '';
     child.stdout.on('data', (chunk) => {
       stdout += chunk;
+      pending += chunk;
+      const lines = pending.split('\n');
+      pending = lines.pop() ?? '';
+      for (const line of lines) {
+        onLine(line);
+      }
     });
     child.stderr.on('data', (chunk) => {
       stderr += chunk;
@@ -63,6 +70,9 @@ export function runKane({ objective, url, maxSteps = 15, timeoutSec = 180 }) {
 
     child.on('close', (exitCode) => {
       clearTimeout(killer);
+      if (pending.length > 0) {
+        onLine(pending);
+      }
       resolve({ exitCode, stdout, stderr, runEnd: extractRunEnd(stdout) });
     });
   });

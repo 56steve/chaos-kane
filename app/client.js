@@ -5,15 +5,26 @@ const form = document.querySelector('#checkout');
 const status = document.querySelector('#status');
 const submitButton = document.querySelector('#place-order');
 
+// One key per checkout attempt. A retry of the same order reuses it, so the
+// server can recognise it even when the first response was lost on the way back.
+let attempt = null;
+
+function attemptFor(body) {
+  if (!attempt || attempt.body !== body) {
+    attempt = { key: crypto.randomUUID(), body };
+  }
+  return attempt;
+}
+
 /**
  * Sends the order and returns its confirmation id. Throws unless the server
  * answered with a 2xx status and a JSON body that carries an order id.
  */
-async function placeOrder(payload) {
+async function placeOrder({ key, body }) {
   const response = await fetch('/api/order', {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(payload),
+    headers: { 'content-type': 'application/json', 'idempotency-key': key },
+    body,
     signal: AbortSignal.timeout(ORDER_TIMEOUT_MS),
   });
   if (!response.ok) {
@@ -28,12 +39,13 @@ async function placeOrder(payload) {
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
-  const payload = Object.fromEntries(new FormData(form));
+  const body = JSON.stringify(Object.fromEntries(new FormData(form)));
   status.textContent = 'Placing order...';
   submitButton.disabled = true;
 
   try {
-    const orderId = await placeOrder(payload);
+    const orderId = await placeOrder(attemptFor(body));
+    attempt = null;
     status.textContent = `Order placed! Confirmation ${orderId}`;
   } catch {
     status.textContent = ERROR_MESSAGE;

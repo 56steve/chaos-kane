@@ -42,6 +42,7 @@ function isNonEmptyString(value) {
  */
 export function createApp() {
   const orders = [];
+  const ordersByKey = new Map();
 
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url ?? '/', 'http://localhost');
@@ -66,6 +67,12 @@ export function createApp() {
           sendJson(res, 400, { error: 'name and email are required' });
           return;
         }
+        const idempotencyKey = req.headers['idempotency-key'];
+        const existing = typeof idempotencyKey === 'string' ? ordersByKey.get(idempotencyKey) : undefined;
+        if (existing) {
+          sendJson(res, 201, { id: existing.id });
+          return;
+        }
         const order = {
           id: `ORD-${String(orders.length + 1).padStart(4, '0')}`,
           name: body.name.trim(),
@@ -74,6 +81,9 @@ export function createApp() {
           createdAt: new Date().toISOString(),
         };
         orders.push(order);
+        if (typeof idempotencyKey === 'string' && idempotencyKey.length > 0) {
+          ordersByKey.set(idempotencyKey, order);
+        }
         sendJson(res, 201, { id: order.id });
         return;
       }

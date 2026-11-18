@@ -69,3 +69,12 @@ test('every fault scenario, including double, is accepted', () => {
 test('help short circuits validation', () => {
   assert.equal(parseArgs(['--help']).help, true);
 });
+
+test('--agent-claim and --baseline are accepted and default to undefined', () => {
+  const config = parseArgs(['--demo', '--agent-claim', 'handles API failures', '--baseline', 'reports/baseline.json']);
+  assert.equal(config.agentClaim, 'handles API failures');
+  assert.equal(config.baseline, 'reports/baseline.json');
+  const plain = parseArgs(['--demo']);
+  assert.equal(plain.agentClaim, undefined);
+  assert.equal(plain.baseline, undefined);
+});

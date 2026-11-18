@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { exitCodeFor } from './runner.js';
+import { exitCodeFor, exitCodeWithBaseline } from './runner.js';
 
 const summary = (overrides) => ({ survived: 0, failed: 0, incomplete: 0, total: 0, baseline: 'survived', ...overrides });
 
@@ -26,4 +26,17 @@ test('an incomplete baseline exits 2', () => {
 
 test('failures take priority over incomplete', () => {
   assert.equal(exitCodeFor(summary({ failed: 1, incomplete: 1 })), 1);
+});
+
+
+test('with a baseline, any regression exits 1', () => {
+  assert.equal(exitCodeWithBaseline({ regressions: ['slow'], known: [], fixed: [] }), 1);
+});
+
+test('with a baseline, known failures alone do not fail the run', () => {
+  assert.equal(exitCodeWithBaseline({ regressions: [], known: ['reset', 'timeout'], fixed: [] }), 0);
+});
+
+test('with a baseline, fixes and unchanged results exit 0', () => {
+  assert.equal(exitCodeWithBaseline({ regressions: [], known: [], fixed: ['empty'] }), 0);
 });

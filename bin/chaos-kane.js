@@ -23,6 +23,9 @@ Evidence:
                             duplicate detection is off.
   --noun <word>             what the flow creates, for readable verdicts (default: record)
   --claims "<regex>"        what counts as a success message (default: placed, saved, success, ...)
+  --agent-claim "<text>"   what the agent claimed (for example "handles API failures"); the report says
+                            whether the evidence supports it
+  --baseline <file.json>    compare with an earlier run; only NEW failures fail the run
 
 Faults:
   --faults a,b              scenarios to run (default: all but double). One of: ${SCENARIOS.join(', ')}
@@ -39,7 +42,8 @@ Output:
 
 Works on apps whose API calls go through the app URL (same origin). If the frontend calls
 an API on another origin, the proxy cannot see it and those scenarios report "incomplete".
-Writes <out>/fix-brief.md for any coding agent when something did not survive.
+Writes <out>/summary.md (also appended to the GitHub Actions job summary when running there) and
+<out>/fix-brief.md for any coding agent when something did not survive.
 
 Exit code: 0 all failures survived, 1 at least one was not, 2 no usable result.
 Needs Kane CLI installed and logged in (kane-cli login) and Google Chrome.
@@ -74,6 +78,17 @@ async function main() {
       console.log(`stability: ${summary.total - summary.unstable} of ${summary.total} scenarios gave the same verdict on all ${config.repeat} runs`);
     }
     console.log(`report: ${path.join(outcome.outDir, 'latest.html')}`);
+    if (outcome.claim) {
+      console.log(`agent claim "${outcome.claim.text}": ${outcome.claim.verdict}`);
+    }
+    if (outcome.comparison) {
+      const { regressions, fixed, known } = outcome.comparison;
+      console.log(`baseline: ${regressions.length} regression(s), ${fixed.length} fixed, ${known.length} known failure(s)`);
+      if (regressions.length > 0) {
+        console.log(`regressions: ${regressions.join(', ')}`);
+      }
+    }
+    console.log(`summary: ${outcome.summaryPath}`);
     if (outcome.briefPath) {
       console.log(`fix brief for any coding agent: ${outcome.briefPath}`);
     }

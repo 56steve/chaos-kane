@@ -71,7 +71,7 @@ node bin/chaos-kane.js \
 
 ## Run it
 
-Needs Node 18+, Google Chrome, and a Kane CLI account with credits (a run costs roughly 15 to 30 credits).
+Needs Node 22+, Google Chrome, and a Kane CLI account with credits (a run costs roughly 15 to 30 credits).
 
 ```bash
 npm install -g @testmuai/kane-cli

@@ -9,7 +9,7 @@
     "chaos-kane-mcp": "bin/chaos-kane-mcp.js"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "scripts": {
     "start": "node src/dev.js",

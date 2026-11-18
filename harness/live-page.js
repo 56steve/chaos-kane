@@ -204,29 +204,34 @@ export const LIVE_PAGE = `<!doctype html>
         a: { x1: 160, x2: 240, y: 36, dir: 1 }, b: { x1: 360, x2: 440, y: 36, dir: 1 },
         c: { x1: 440, x2: 360, y: 56, dir: -1 }, d: { x1: 240, x2: 160, y: 56, dir: -1 }
       };
-      // Where the request really goes in each scenario. Top lane (y 36) carries the request,
-      // bottom lane (y 56) the reply. "hold" pauses the dot at a point (seconds); "end" pauses
-      // at the end of the journey before it repeats. The dot stops exactly where the request stops.
+      // Where each order's request really goes. One order is one trip: the dot travels once
+      // and rests where the request ended. Top lane (y 36) carries the request, bottom lane
+      // (y 56) the reply. "hold" pauses the dot at a point (seconds). Two scenarios involve a
+      // second request, so they have a second trip: "after" starts it when the first ends,
+      // "delay" starts it that many seconds after the first one started.
+      var ROUND = [[160, 36], [440, 36], [440, 56], [160, 56]];
+      var TO_PROXY_AND_BACK = [[160, 36], [240, 36], [240, 56], [160, 56]];
       var JOURNEYS = {
-        none:     { points: [[160, 36], [440, 36], [440, 56], [160, 56]], hold: {}, end: 0.8 },
-        error500: { points: [[160, 36], [240, 36], [240, 56], [160, 56]], hold: {}, end: 0.8 },
-        slow:     { points: [[160, 36], [440, 36], [440, 56], [160, 56]], hold: { 1: 2.4 }, end: 0.8 },
-        timeout:  { points: [[160, 36], [240, 36]], hold: {}, end: 2 },
-        garbage:  { points: [[160, 36], [240, 36], [240, 56], [160, 56]], hold: {}, end: 0.8 },
-        empty:    { points: [[160, 36], [240, 36], [240, 56], [160, 56]], hold: {}, end: 0.8 },
-        reset:    { points: [[160, 36], [200, 36]], hold: {}, end: 1.4 },
-        ghost:    { points: [[160, 36], [440, 36], [440, 56], [200, 56]], hold: { 1: 0.6 }, end: 1.4 },
-        double:   { points: [[160, 36], [440, 36], [440, 56], [160, 56]], hold: { 1: 1.2 }, end: 0.8 }
+        none:     [{ points: ROUND, hold: {} }],
+        error500: [{ points: TO_PROXY_AND_BACK, hold: {} }],
+        slow:     [{ points: ROUND, hold: { 1: 2.4 } }],
+        timeout:  [{ points: [[160, 36], [240, 36]], hold: {} }],
+        garbage:  [{ points: TO_PROXY_AND_BACK, hold: {} }],
+        empty:    [{ points: TO_PROXY_AND_BACK, hold: {} }],
+        reset:    [{ points: [[160, 36], [200, 36]], hold: {} }],
+        ghost:    [{ points: [[160, 36], [440, 36], [440, 56], [200, 56]], hold: { 1: 0.6 } }, { points: ROUND, hold: {}, after: 0.7 }],
+        double:   [{ points: ROUND, hold: { 1: 1.2 } }, { points: ROUND, hold: { 1: 1.2 }, delay: 0.4 }]
       };
       var DOT_SPEED = 150;
 
-      function buildJourney(journey) {
-        var pts = journey.points;
-        var path = 'M' + pts[0][0] + ',' + pts[0][1];
+      // Turns a trip into a motion path relative to its start, with timing so holds are real pauses.
+      function buildTrip(trip) {
+        var pts = trip.points;
+        var path = 'M0,0';
         var cum = [0];
         var i;
         for (i = 1; i < pts.length; i += 1) {
-          path += ' L' + pts[i][0] + ',' + pts[i][1];
+          path += ' L' + (pts[i][0] - pts[0][0]) + ',' + (pts[i][1] - pts[0][1]);
           cum.push(cum[i - 1] + Math.abs(pts[i][0] - pts[i - 1][0]) + Math.abs(pts[i][1] - pts[i - 1][1]));
         }
         var total = cum[cum.length - 1];
@@ -237,7 +242,7 @@ export const LIVE_PAGE = `<!doctype html>
           time += (cum[i] - cum[i - 1]) / DOT_SPEED;
           keyPoints.push(cum[i] / total);
           keyTimes.push(time);
-          var pause = i === pts.length - 1 ? journey.end : (journey.hold[i] || 0);
+          var pause = i < pts.length - 1 ? (trip.hold[i] || 0) : 0;
           if (pause > 0) {
             time += pause;
             keyPoints.push(cum[i] / total);
@@ -245,11 +250,19 @@ export const LIVE_PAGE = `<!doctype html>
           }
         }
         return {
+          start: pts[0],
           path: path,
           dur: time,
           keyPoints: keyPoints.join(';'),
           keyTimes: keyTimes.map(function (t) { return t / time; }).join(';')
         };
+      }
+
+      // Animations are started explicitly, because an animation added to a page that has been
+      // open for a while would otherwise be treated as already finished.
+      function startAt(animation, seconds) {
+        if (seconds > 0 && typeof animation.beginElementAt === 'function') { animation.beginElementAt(seconds); }
+        else if (typeof animation.beginElement === 'function') { animation.beginElement(); }
       }
 
       var list = document.getElementById('list');
@@ -363,16 +376,27 @@ export const LIVE_PAGE = `<!doctype html>
           tag.textContent = spec.tag[1];
         }
         if (item.status === 'running') {
-          var journey = buildJourney(JOURNEYS[scenario] || JOURNEYS.none);
-          var dot = svg('circle', { cx: 0, cy: 0, r: 4, 'class': 'packet' }, wire);
-          svg('animateMotion', {
-            path: journey.path,
-            dur: journey.dur + 's',
-            repeatCount: 'indefinite',
-            calcMode: 'linear',
-            keyPoints: journey.keyPoints,
-            keyTimes: journey.keyTimes
-          }, dot);
+          var previousEnd = 0;
+          (JOURNEYS[scenario] || JOURNEYS.none).forEach(function (trip, index) {
+            var built = buildTrip(trip);
+            var begin = trip.after !== undefined ? previousEnd + trip.after : (trip.delay || 0);
+            previousEnd = begin + built.dur;
+            var dot = svg('circle', { cx: built.start[0], cy: built.start[1], r: 4, 'class': 'packet', visibility: index === 0 ? 'visible' : 'hidden' }, wire);
+            var motion = svg('animateMotion', {
+              path: built.path,
+              dur: built.dur + 's',
+              begin: 'indefinite',
+              repeatCount: '1',
+              fill: 'freeze',
+              calcMode: 'linear',
+              keyPoints: built.keyPoints,
+              keyTimes: built.keyTimes
+            }, dot);
+            startAt(motion, begin);
+            if (index > 0) {
+              startAt(svg('set', { attributeName: 'visibility', to: 'visible', begin: 'indefinite' }, dot), begin);
+            }
+          });
         }
       }
 

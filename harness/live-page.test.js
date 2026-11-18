@@ -15,6 +15,15 @@ class El {
     this.src = '';
     this.attrs = {};
     this.onclick = null;
+    this.started = [];
+  }
+
+  beginElement() {
+    this.started.push(0);
+  }
+
+  beginElementAt(seconds) {
+    this.started.push(seconds);
   }
 
   set textContent(value) {
@@ -386,83 +395,125 @@ test('readout heights and the headline are fixed so nothing below them moves', (
   assert.match(LIVE_PAGE, /h1 \{[^}]*white-space: nowrap/);
 });
 
-const packetOf = (el) => el('wire').children.find((child) => child.attrs.class === 'packet');
-const motionFor = async (scenario) => {
+const dotsOf = (el) => el('wire').children.filter((child) => child.attrs.class === 'packet');
+
+/** Reads a dot's trip back from the page: absolute points, timing and how it was started. */
+const tripOf = (dot) => {
+  const motion = dot.children.find((child) => child.tagName === 'animateMotion');
+  const reveal = dot.children.find((child) => child.tagName === 'set');
+  const start = [Number(dot.attrs.cx), Number(dot.attrs.cy)];
+  const points = [...motion.attrs.path.matchAll(/[ML](-?\d+),(-?\d+)/g)].map((match) => [start[0] + Number(match[1]), start[1] + Number(match[2])]);
+  return { dot, motion, reveal, points, dur: Number.parseFloat(motion.attrs.dur) };
+};
+
+const tripsFor = async (scenario) => {
   const { el, send } = await startPage();
   send(runStart({ scenarios: [scenario] }));
   send({ type: 'scenario_start', scenario, run: 1, runs: 1 });
-  return { el, send, motion: packetOf(el)?.children[0]?.attrs };
+  return { el, send, trips: dotsOf(el).map(tripOf) };
 };
 
-test('the moving dot follows the real journey of the request in each scenario', async () => {
+const ROUND = [[160, 36], [440, 36], [440, 56], [160, 56]];
+const BACK_FROM_PROXY = [[160, 36], [240, 36], [240, 56], [160, 56]];
+
+test('each order is one trip: the dot follows the request path and there is one dot', async () => {
   const expected = {
-    none: 'M160,36 L440,36 L440,56 L160,56',
-    error500: 'M160,36 L240,36 L240,56 L160,56',
-    garbage: 'M160,36 L240,36 L240,56 L160,56',
-    empty: 'M160,36 L240,36 L240,56 L160,56',
-    slow: 'M160,36 L440,36 L440,56 L160,56',
-    double: 'M160,36 L440,36 L440,56 L160,56',
-    timeout: 'M160,36 L240,36',
-    reset: 'M160,36 L200,36',
-    ghost: 'M160,36 L440,36 L440,56 L200,56',
+    none: ROUND,
+    slow: ROUND,
+    error500: BACK_FROM_PROXY,
+    garbage: BACK_FROM_PROXY,
+    empty: BACK_FROM_PROXY,
+    timeout: [[160, 36], [240, 36]],
+    reset: [[160, 36], [200, 36]],
   };
-  for (const [scenario, path] of Object.entries(expected)) {
-    const { motion } = await motionFor(scenario);
-    assert.equal(motion.path, path, `${scenario} should follow ${path}`);
+  for (const [scenario, points] of Object.entries(expected)) {
+    const { trips } = await tripsFor(scenario);
+    assert.equal(trips.length, 1, `${scenario}: one order, one dot`);
+    assert.deepEqual(trips[0].points, points, `${scenario} follows its path`);
   }
 });
 
-test('the dot never goes where the request does not: a server error never reaches the backend', async () => {
-  const { motion } = await motionFor('error500');
-  const xs = [...motion.path.matchAll(/[ML](\d+),/g)].map((match) => Number(match[1]));
-  assert.ok(Math.max(...xs) <= 240, 'the proxy answers itself, so the dot stops at the proxy and comes back');
-});
-
-test('a request that never gets a reply has no way back along the reply lane', async () => {
-  for (const scenario of ['timeout', 'reset']) {
-    const { motion } = await motionFor(scenario);
-    assert.doesNotMatch(motion.path, /,56/, `${scenario} should stay on the request lane`);
-  }
-});
-
-test('a lost reply goes all the way to the backend and dies at the cut on the way back', async () => {
-  const { motion } = await motionFor('ghost');
-  assert.match(motion.path, /L440,36 L440,56/);
-  assert.match(motion.path, /L200,56$/);
-});
-
-test('every journey has valid, matching timing data', async () => {
+test('every trip plays once and then rests where the request ended, never looping', async () => {
   for (const scenario of ['none', 'error500', 'slow', 'timeout', 'garbage', 'empty', 'reset', 'ghost', 'double']) {
-    const { motion } = await motionFor(scenario);
-    const points = motion.keyPoints.split(';').map(Number);
-    const times = motion.keyTimes.split(';').map(Number);
-    assert.equal(points.length, times.length, `${scenario}: one time per point`);
-    assert.equal(points[0], 0);
-    assert.equal(points.at(-1), 1);
-    assert.equal(times[0], 0);
-    assert.equal(times.at(-1), 1);
-    assert.ok(times.every((time, index) => index === 0 || time >= times[index - 1]), `${scenario}: times never go backwards`);
-    assert.ok(points.every((point, index) => index === 0 || point >= points[index - 1]), `${scenario}: the dot never goes backwards on its path`);
-    assert.ok(Number.parseFloat(motion.dur) > 0);
+    const { trips } = await tripsFor(scenario);
+    for (const trip of trips) {
+      assert.equal(trip.motion.attrs.repeatCount, '1', `${scenario} plays once`);
+      assert.equal(trip.motion.attrs.fill, 'freeze', `${scenario} stays at its last position`);
+      assert.equal(trip.motion.attrs.begin, 'indefinite', `${scenario} is started explicitly`);
+    }
+  }
+});
+
+test('the first trip starts right away', async () => {
+  const { trips } = await tripsFor('none');
+  assert.deepEqual(trips[0].motion.started, [0]);
+});
+
+test('a server error never reaches the backend: the dot stops at the proxy and comes back', async () => {
+  const { trips } = await tripsFor('error500');
+  assert.ok(Math.max(...trips[0].points.map((point) => point[0])) <= 240);
+});
+
+test('a request with no reply never uses the reply lane', async () => {
+  for (const scenario of ['timeout', 'reset']) {
+    const { trips } = await tripsFor(scenario);
+    assert.ok(trips[0].points.every((point) => point[1] === 36), `${scenario} stays on the request lane`);
+  }
+});
+
+test('a lost reply is two trips: the first dies at the cut, then the retry goes all the way and back', async () => {
+  const { trips } = await tripsFor('ghost');
+  assert.equal(trips.length, 2);
+  assert.deepEqual(trips[0].points, [[160, 36], [440, 36], [440, 56], [200, 56]]);
+  assert.deepEqual(trips[1].points, ROUND);
+  const [first, retry] = trips;
+  assert.equal(retry.dot.attrs.visibility, 'hidden', 'the retry is not visible until it starts');
+  assert.ok(Math.abs(retry.motion.started[0] - (first.dur + 0.7)) < 1e-9, 'the retry starts after the first trip ends');
+  assert.deepEqual(retry.reveal.started, retry.motion.started, 'it appears exactly when it starts');
+});
+
+test('a double click is two trips a moment apart, one right behind the other', async () => {
+  const { trips } = await tripsFor('double');
+  assert.equal(trips.length, 2);
+  assert.deepEqual(trips[0].points, ROUND);
+  assert.deepEqual(trips[1].points, ROUND);
+  assert.deepEqual(trips[1].motion.started, [0.4]);
+  assert.equal(trips[1].dot.attrs.visibility, 'hidden');
+});
+
+test('every trip has valid, matching timing data', async () => {
+  for (const scenario of ['none', 'error500', 'slow', 'timeout', 'garbage', 'empty', 'reset', 'ghost', 'double']) {
+    const { trips } = await tripsFor(scenario);
+    for (const trip of trips) {
+      const points = trip.motion.attrs.keyPoints.split(';').map(Number);
+      const times = trip.motion.attrs.keyTimes.split(';').map(Number);
+      assert.equal(points.length, times.length, `${scenario}: one time per point`);
+      assert.deepEqual([points[0], points.at(-1), times[0], times.at(-1)], [0, 1, 0, 1]);
+      assert.ok(times.every((time, index) => index === 0 || time >= times[index - 1]), `${scenario}: time never goes backwards`);
+      assert.ok(points.every((point, index) => index === 0 || point >= points[index - 1]), `${scenario}: the dot never goes backwards on its path`);
+      assert.ok(trip.dur > 0);
+    }
   }
 });
 
 test('a slow request makes the dot wait at the backend before the reply starts', async () => {
-  const { motion } = await motionFor('slow');
-  const points = motion.keyPoints.split(';').map(Number);
-  const times = motion.keyTimes.split(';').map(Number);
+  const { trips } = await tripsFor('slow');
+  const points = trips[0].motion.attrs.keyPoints.split(';').map(Number);
+  const times = trips[0].motion.attrs.keyTimes.split(';').map(Number);
   const heldAt = points.findIndex((point, index) => index > 0 && point === points[index - 1] && point > 0 && point < 1);
   assert.ok(heldAt > 0, 'there is a pause on the way');
   assert.ok(times[heldAt] - times[heldAt - 1] > 0.2, 'and it is a long pause, not a blip');
 });
 
-test('the dot only moves while a scenario is running', async () => {
+test('the dots only exist while a scenario is running', async () => {
   const { el, send } = await startPage();
   send(runStart());
   send({ type: 'scenario_start', scenario: 'error500', run: 1, runs: 1 });
-  assert.ok(packetOf(el));
+  assert.equal(dotsOf(el).length, 1);
+  send({ type: 'kane_line', scenario: 'error500', text: 'click: Place order' });
+  assert.equal(dotsOf(el).length, 1, 'new events do not restart or duplicate the trip');
   send(result({}));
-  assert.equal(packetOf(el), undefined);
+  assert.equal(dotsOf(el).length, 0);
 });
 
 test('people who prefer reduced motion do not get the moving dot', () => {

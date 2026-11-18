@@ -1,0 +1,43 @@
+{
+  "generatedAt": "2026-11-18T11:40:18.880Z",
+  "results": [
+    {
+      "scenario": "none",
+      "outcome": "failed",
+      "reasons": [
+        "fake success: page says \"Order placed! Confirmation ORD-0001\" but the backend has no order (request returned HTTP 201)"
+      ],
+      "statusMessage": "Order placed! Confirmation ORD-0001",
+      "requestStatus": "201",
+      "orderCreated": false,
+      "orderCount": 0,
+      "evidence": "proxy",
+      "kaneExitCode": 0,
+      "credits": 24.6013475,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "failed"
+      ]
+    },
+    {
+      "scenario": "error500",
+      "outcome": "incomplete",
+      "reasons": [
+        "the error500 fault never fired: no POST/PUT/PATCH/DELETE request under /api/ reached the proxy. If the app's API is on another origin, the proxy cannot see it"
+      ],
+      "statusMessage": "Order placed! Confirmation ORD-0002",
+      "requestStatus": "201",
+      "orderCreated": false,
+      "orderCount": 0,
+      "evidence": "proxy",
+      "kaneExitCode": 0,
+      "credits": 26.2476725,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "incomplete"
+      ]
+    }
+  ]
+}

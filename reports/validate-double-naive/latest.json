@@ -1,0 +1,26 @@
+{
+  "generatedAt": "2026-11-18T11:45:12.536Z",
+  "results": [
+    {
+      "scenario": "double",
+      "outcome": "failed",
+      "reasons": [
+        "duplicate order: one flow produced 2 orders after a retry (page says \"Order placed! Confirmation ORD-0002\")"
+      ],
+      "statusMessage": "Order placed! Confirmation ORD-0002",
+      "requestStatus": "201",
+      "orderCreated": true,
+      "orderCount": 2,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 66.0012595,
+      "agreement": "3/3",
+      "stable": true,
+      "runOutcomes": [
+        "failed",
+        "failed",
+        "failed"
+      ]
+    }
+  ]
+}

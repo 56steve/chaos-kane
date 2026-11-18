@@ -1,0 +1,26 @@
+{
+  "generatedAt": "2026-11-18T11:50:01.577Z",
+  "results": [
+    {
+      "scenario": "double",
+      "outcome": "survived",
+      "reasons": [
+        "order was saved and the user was told so"
+      ],
+      "statusMessage": "Order placed! Confirmation ORD-0001",
+      "requestStatus": "201",
+      "orderCreated": true,
+      "orderCount": 1,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 61.69794,
+      "agreement": "3/3",
+      "stable": true,
+      "runOutcomes": [
+        "survived",
+        "survived",
+        "survived"
+      ]
+    }
+  ]
+}

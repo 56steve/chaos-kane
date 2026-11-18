@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chaos Kane resilience report</title>
+  <style>
+    :root { color-scheme: light dark; --ok: #1a7f37; --bad: #cf222e; --warn: #9a6700; }
+    body { font-family: system-ui, sans-serif; max-width: 70rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.4; }
+    h1 { margin-bottom: 0.25rem; }
+    .score { font-size: 2.5rem; font-weight: 700; margin: 1rem 0 0.25rem; }
+    .muted { opacity: 0.7; }
+    table { border-collapse: collapse; width: 100%; margin-top: 1.5rem; }
+    th, td { text-align: left; padding: 0.5rem 0.6rem; border-bottom: 1px solid rgba(128,128,128,0.35); vertical-align: top; }
+    .badge { padding: 0.1rem 0.5rem; border-radius: 999px; font-size: 0.85rem; font-weight: 600; color: #fff; }
+    .badge.survived { background: var(--ok); }
+    .badge.failed { background: var(--bad); }
+    .badge.incomplete { background: var(--warn); }
+  </style>
+</head>
+<body>
+  <h1>Chaos Kane resilience report</h1>
+  <p class="muted">Generated 2026-11-18T11:40:18.880Z. Kane observes; the verdict comes from what the shopper saw compared with what the backend did.</p>
+  <div class="score">0 of 1 failures survived</div>
+  <p class="muted">Healthy baseline: failed &middot; failed: 0 &middot; incomplete: 1 &middot; Kane credits used: 50.8</p>
+  <table>
+    <thead><tr><th>Scenario</th><th>Verdict</th><th>Page said</th><th>Order request</th><th>Backend truth</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr class="failed">
+        <td><code>none</code></td>
+        <td><span class="badge failed">failed</span> <small class="muted">1/1</small></td>
+        <td>Order placed! Confirmation ORD-0001</td>
+        <td>201</td>
+        <td>no order</td>
+        <td>fake success: page says &quot;Order placed! Confirmation ORD-0001&quot; but the backend has no order (request returned HTTP 201)</td>
+      </tr>
+      <tr class="incomplete">
+        <td><code>error500</code></td>
+        <td><span class="badge incomplete">incomplete</span> <small class="muted">1/1</small></td>
+        <td>Order placed! Confirmation ORD-0002</td>
+        <td>201</td>
+        <td>no order</td>
+        <td>the error500 fault never fired: no POST/PUT/PATCH/DELETE request under /api/ reached the proxy. If the app's API is on another origin, the proxy cannot see it</td>
+      </tr></tbody>
+  </table>
+</body>
+</html>

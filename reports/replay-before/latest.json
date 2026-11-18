@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-18T11:21:13.354Z",
+  "generatedAt": "2026-11-18T13:28:03.026Z",
   "results": [
     {
       "scenario": "none",
@@ -9,11 +9,22 @@
       ],
       "statusMessage": "Order placed! Confirmation ORD-0001",
       "requestStatus": "201",
+      "statusSource": "network-log",
+      "crossCheck": "agreed",
+      "kaneReportedStatus": "201",
+      "network": [
+        {
+          "method": "POST",
+          "path": "/api/order",
+          "status": 201
+        }
+      ],
+      "screenshot": "evidence/none-1.jpg",
       "orderCreated": true,
       "orderCount": 1,
       "evidence": "backend",
       "kaneExitCode": 0,
-      "credits": 18.733004,
+      "credits": 17.9842725,
       "agreement": "1/1",
       "stable": true,
       "runOutcomes": [
@@ -28,11 +39,22 @@
       ],
       "statusMessage": "Order placed! Confirmation pending",
       "requestStatus": "500",
+      "statusSource": "network-log",
+      "crossCheck": "agreed",
+      "kaneReportedStatus": "500",
+      "network": [
+        {
+          "method": "POST",
+          "path": "/api/order",
+          "status": 500
+        }
+      ],
+      "screenshot": "evidence/error500-1.jpg",
       "orderCreated": false,
       "orderCount": 0,
       "evidence": "backend",
       "kaneExitCode": 0,
-      "credits": 17.093302500000004,
+      "credits": 21.7253675,
       "agreement": "1/1",
       "stable": true,
       "runOutcomes": [
@@ -47,11 +69,22 @@
       ],
       "statusMessage": "Order placed! Confirmation ORD-0002",
       "requestStatus": "201",
+      "statusSource": "network-log",
+      "crossCheck": "agreed",
+      "kaneReportedStatus": "201",
+      "network": [
+        {
+          "method": "POST",
+          "path": "/api/order",
+          "status": 201
+        }
+      ],
+      "screenshot": "evidence/slow-1.jpg",
       "orderCreated": true,
       "orderCount": 1,
       "evidence": "backend",
       "kaneExitCode": 0,
-      "credits": 21.0546,
+      "credits": 18.458034,
       "agreement": "1/1",
       "stable": true,
       "runOutcomes": [
@@ -66,11 +99,22 @@
       ],
       "statusMessage": "Placing order...",
       "requestStatus": "no response",
+      "statusSource": "network-log",
+      "crossCheck": "agreed",
+      "kaneReportedStatus": "no response",
+      "network": [
+        {
+          "method": "POST",
+          "path": "/api/order",
+          "status": 0
+        }
+      ],
+      "screenshot": "evidence/timeout-1.jpg",
       "orderCreated": false,
       "orderCount": 0,
       "evidence": "backend",
       "kaneExitCode": 0,
-      "credits": 20.5182475,
+      "credits": 23.6571665,
       "agreement": "1/1",
       "stable": true,
       "runOutcomes": [
@@ -85,11 +129,22 @@
       ],
       "statusMessage": "Order placed! Confirmation pending",
       "requestStatus": "200",
+      "statusSource": "network-log",
+      "crossCheck": "agreed",
+      "kaneReportedStatus": "200",
+      "network": [
+        {
+          "method": "POST",
+          "path": "/api/order",
+          "status": 200
+        }
+      ],
+      "screenshot": "evidence/garbage-1.jpg",
       "orderCreated": false,
       "orderCount": 0,
       "evidence": "backend",
       "kaneExitCode": 0,
-      "credits": 24.781539999999996,
+      "credits": 19.328742500000004,
       "agreement": "1/1",
       "stable": true,
       "runOutcomes": [
@@ -104,11 +159,22 @@
       ],
       "statusMessage": "Order placed! Confirmation pending",
       "requestStatus": "200",
+      "statusSource": "network-log",
+      "crossCheck": "agreed",
+      "kaneReportedStatus": "200",
+      "network": [
+        {
+          "method": "POST",
+          "path": "/api/order",
+          "status": 200
+        }
+      ],
+      "screenshot": "evidence/empty-1.jpg",
       "orderCreated": false,
       "orderCount": 0,
       "evidence": "backend",
       "kaneExitCode": 0,
-      "credits": 22.130131499999997,
+      "credits": 18.386554999999998,
       "agreement": "1/1",
       "stable": true,
       "runOutcomes": [
@@ -123,11 +189,22 @@
       ],
       "statusMessage": "Order placed! Confirmation pending",
       "requestStatus": "no response",
+      "statusSource": "network-log",
+      "crossCheck": "agreed",
+      "kaneReportedStatus": "no response",
+      "network": [
+        {
+          "method": "POST",
+          "path": "/api/order",
+          "status": 0
+        }
+      ],
+      "screenshot": "evidence/reset-1.jpg",
       "orderCreated": false,
       "orderCount": 0,
       "evidence": "backend",
       "kaneExitCode": 0,
-      "credits": 13.499362499999998,
+      "credits": 7.905429999999999,
       "agreement": "1/1",
       "stable": true,
       "runOutcomes": [
@@ -138,15 +215,26 @@
       "scenario": "ghost",
       "outcome": "failed",
       "reasons": [
-        "duplicate order: one flow produced 2 orders after a retry (page says \"Order placed! Confirmation ORD-0004\")"
+        "duplicate order: one flow produced 2 orders from a retry or double click (page says \"Order placed! Confirmation ORD-0004\")"
       ],
       "statusMessage": "Order placed! Confirmation ORD-0004",
       "requestStatus": "201",
+      "statusSource": "network-log",
+      "crossCheck": "agreed",
+      "kaneReportedStatus": "201",
+      "network": [
+        {
+          "method": "POST",
+          "path": "/api/order",
+          "status": 201
+        }
+      ],
+      "screenshot": "evidence/ghost-1.jpg",
       "orderCreated": true,
       "orderCount": 2,
       "evidence": "backend",
       "kaneExitCode": 0,
-      "credits": 27.584254999999995,
+      "credits": 33.070182499999994,
       "agreement": "1/1",
       "stable": true,
       "runOutcomes": [

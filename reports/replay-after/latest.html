@@ -20,9 +20,9 @@
 </head>
 <body>
   <h1>Chaos Kane resilience report</h1>
-  <p class="muted">Generated 2026-11-18T11:34:41.230Z. Kane observes; the verdict comes from what the shopper saw compared with what the backend did.</p>
+  <p class="muted">Generated 2026-11-18T13:44:04.532Z. Kane observes; the verdict comes from what the shopper saw compared with what the backend did.</p>
   <div class="score">7 of 7 failures survived</div>
-  <p class="muted">Healthy baseline: survived &middot; failed: 0 &middot; incomplete: 0 &middot; Kane credits used: 171.9</p>
+  <p class="muted">Healthy baseline: survived &middot; failed: 0 &middot; incomplete: 0 &middot; Kane credits used: 167.8</p>
   <table>
     <thead><tr><th>Scenario</th><th>Verdict</th><th>Page said</th><th>Order request</th><th>Backend truth</th><th>Why</th></tr></thead>
     <tbody>
@@ -32,7 +32,7 @@
         <td>Order placed! Confirmation ORD-0001</td>
         <td>201</td>
         <td>order saved</td>
-        <td>order was saved and the user was told so</td>
+        <td>order was saved and the user was told so <a href="evidence/none-1.jpg">screenshot</a></td>
       </tr>
       <tr class="survived">
         <td><code>error500</code></td>
@@ -40,7 +40,7 @@
         <td>We couldn't place your order. Please try again.</td>
         <td>500</td>
         <td>no order</td>
-        <td>no order saved and the user saw a clear error: &quot;We couldn't place your order. Please try again.&quot;</td>
+        <td>no order saved and the user saw a clear error: &quot;We couldn't place your order. Please try again.&quot; <a href="evidence/error500-1.jpg">screenshot</a></td>
       </tr>
       <tr class="survived">
         <td><code>slow</code></td>
@@ -48,7 +48,7 @@
         <td>Order placed! Confirmation ORD-0002</td>
         <td>201</td>
         <td>order saved</td>
-        <td>order was saved and the user was told so</td>
+        <td>order was saved and the user was told so <a href="evidence/slow-1.jpg">screenshot</a></td>
       </tr>
       <tr class="survived">
         <td><code>timeout</code></td>
@@ -56,7 +56,7 @@
         <td>We couldn't place your order. Please try again.</td>
         <td>no response</td>
         <td>no order</td>
-        <td>no order saved and the user saw a clear error: &quot;We couldn't place your order. Please try again.&quot;</td>
+        <td>no order saved and the user saw a clear error: &quot;We couldn't place your order. Please try again.&quot; <a href="evidence/timeout-1.jpg">screenshot</a></td>
       </tr>
       <tr class="survived">
         <td><code>garbage</code></td>
@@ -64,7 +64,7 @@
         <td>We couldn't place your order. Please try again.</td>
         <td>200</td>
         <td>no order</td>
-        <td>no order saved and the user saw a clear error: &quot;We couldn't place your order. Please try again.&quot;</td>
+        <td>no order saved and the user saw a clear error: &quot;We couldn't place your order. Please try again.&quot; <a href="evidence/garbage-1.jpg">screenshot</a></td>
       </tr>
       <tr class="survived">
         <td><code>empty</code></td>
@@ -72,7 +72,7 @@
         <td>We couldn't place your order. Please try again.</td>
         <td>200</td>
         <td>no order</td>
-        <td>no order saved and the user saw a clear error: &quot;We couldn't place your order. Please try again.&quot;</td>
+        <td>no order saved and the user saw a clear error: &quot;We couldn't place your order. Please try again.&quot; <a href="evidence/empty-1.jpg">screenshot</a></td>
       </tr>
       <tr class="survived">
         <td><code>reset</code></td>
@@ -80,7 +80,7 @@
         <td>We couldn't place your order. Please try again.</td>
         <td>no response</td>
         <td>no order</td>
-        <td>no order saved and the user saw a clear error: &quot;We couldn't place your order. Please try again.&quot;</td>
+        <td>no order saved and the user saw a clear error: &quot;We couldn't place your order. Please try again.&quot; <a href="evidence/reset-1.jpg">screenshot</a></td>
       </tr>
       <tr class="survived">
         <td><code>ghost</code></td>
@@ -88,7 +88,7 @@
         <td>Order placed! Confirmation ORD-0003</td>
         <td>201</td>
         <td>order saved</td>
-        <td>order was saved and the user was told so</td>
+        <td>order was saved and the user was told so <a href="evidence/ghost-1.jpg">screenshot</a></td>
       </tr></tbody>
   </table>
 </body>

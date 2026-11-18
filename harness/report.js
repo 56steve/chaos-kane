@@ -1,3 +1,5 @@
+import { outcomeLabel } from './labels.js';
+
 function escapeHtml(value) {
   return String(value ?? '')
     .replaceAll('&', '&amp;')
@@ -26,7 +28,7 @@ export function renderReport({ title, generatedAt, results }) {
       (result) => `
       <tr class="${escapeHtml(result.outcome)}">
         <td><code>${escapeHtml(result.scenario)}</code></td>
-        <td><span class="badge ${escapeHtml(result.outcome)}">${escapeHtml(result.outcome)}</span>${result.stable === undefined ? '' : ` <small class="muted">${escapeHtml(result.agreement)}</small>`}</td>
+        <td><span class="badge ${escapeHtml(result.outcome)}">${escapeHtml(outcomeLabel(result.outcome))}</span>${result.stable === undefined ? '' : ` <small class="muted">${escapeHtml(result.agreement)}</small>`}</td>
         <td>${escapeHtml(result.statusMessage ?? 'no value')}</td>
         <td>${escapeHtml(result.requestStatus ?? 'no value')}</td>
         <td>${result.orderCreated ? 'order saved' : 'no order'}</td>

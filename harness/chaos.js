@@ -3,6 +3,7 @@ import path from 'node:path';
 import { createApp } from '../app/server.js';
 import { DEFAULT_METHODS, DEFAULT_PREFIXES, createChaosProxy, SCENARIOS } from '../chaos/proxy.js';
 import { aggregateRuns } from './aggregate.js';
+import { claimVerdict } from './claim.js';
 import { createHub } from './hub.js';
 import { runKane } from './kane.js';
 import { renderReport, summarize } from './report.js';
@@ -145,6 +146,7 @@ export async function runChaosAgainst({
   noun = 'order',
   proxyOptions = {},
   successPattern = undefined,
+  claim = undefined,
   hub = createHub(),
   onProgress = () => {},
 }) {
@@ -168,7 +170,7 @@ export async function runChaosAgainst({
     },
   });
   await listen(proxy.server, proxyPort);
-  hub.emit({ type: 'run_start', scenarios, repeat, target: appUrl, flow, noun });
+  hub.emit({ type: 'run_start', scenarios, repeat, target: appUrl, flow, noun, claim });
 
   const rules = { prefixes: proxyOptions.prefixes ?? DEFAULT_PREFIXES, methods: proxyOptions.methods ?? DEFAULT_METHODS };
   const ctx = { proxy, truth, flow, noun, outDir, proxyPort, hub, successPattern, rules, faultsFired: () => faultCount };
@@ -189,7 +191,12 @@ export async function runChaosAgainst({
     proxy.server.closeAllConnections();
   }
 
-  hub.emit({ type: 'run_end', summary: summarize(results) });
+  const finalSummary = summarize(results);
+  hub.emit({
+    type: 'run_end',
+    summary: finalSummary,
+    claim: claim ? { text: claim, verdict: claimVerdict(finalSummary) } : undefined,
+  });
   await writeFile(path.join(outDir, 'events.json'), `${JSON.stringify(hub.history())}\n`);
   return results;
 }

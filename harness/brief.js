@@ -1,3 +1,6 @@
+import { describeClaim } from './claim.js';
+import { summarize } from './report.js';
+
 function describeRequest(status) {
   return /^\d{3}$/.test(String(status)) ? `HTTP ${status}` : String(status ?? 'no recorded status');
 }
@@ -22,7 +25,7 @@ function describeFailure(result, noun) {
  * it carries Kane's evidence, what a correct fix looks like, and what must not
  * be touched.
  */
-export function buildFixBrief({ results, target, flow, noun = 'record' }) {
+export function buildFixBrief({ results, target, flow, noun = 'record', claim }) {
   const faults = results.filter((result) => result.scenario !== 'none');
   const survived = faults.filter((result) => result.outcome === 'survived').length;
   const failed = results.filter((result) => result.outcome === 'failed');
@@ -37,6 +40,9 @@ export function buildFixBrief({ results, target, flow, noun = 'record' }) {
     `Result: ${survived} of ${faults.length} injected failures survived.`,
     '',
   ];
+  if (claim) {
+    lines.push(describeClaim(claim, summarize(results)), '');
+  }
 
   if (failed.length === 0 && incomplete.length === 0) {
     lines.push('All scenarios survived, so there is nothing to fix.');
@@ -61,9 +67,9 @@ export function buildFixBrief({ results, target, flow, noun = 'record' }) {
 
   if (incomplete.length > 0) {
     lines.push(
-      '## Not verified',
+      '## Unable to verify',
       '',
-      'These scenarios produced no usable result, so nothing can be said about them. They are not passes.',
+      'These scenarios produced no usable evidence, so nothing can be said about them. They are not passes.',
       '',
       ...incomplete.map((result) => `- ${result.scenario}: ${result.reasons[0] ?? 'no usable observation'}`),
       '',

@@ -37,7 +37,7 @@ test('the brief states the fix rules and forbids touching the checker', () => {
 test('incomplete scenarios are called out as not verified', () => {
   const brief = buildFixBrief({ results: [failing, incomplete], ...context });
   assert.match(brief, /ghost/);
-  assert.match(brief, /not verified/i);
+  assert.match(brief, /unable to verify/i);
 });
 
 test('an all-survived run says there is nothing to fix', () => {

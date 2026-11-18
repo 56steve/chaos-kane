@@ -1,4 +1,5 @@
 import { parseArgs } from './cli-args.js';
+import { outcomeLabel } from './labels.js';
 
 const QUICK_FAULTS = ['none', 'error500', 'ghost'];
 
@@ -37,6 +38,7 @@ export function buildChaosArgv(args, outDir) {
     ['--truth-url', args.truth_url],
     ['--noun', args.noun],
     ['--claims', args.claims],
+    ['--agent-claim', args.agent_claim],
     ['--repeat', args.repeat],
     ['--fault-paths', listOf(args.fault_paths)],
     ['--fault-methods', listOf(args.fault_methods)],
@@ -54,7 +56,7 @@ export function buildChaosArgv(args, outDir) {
 export function formatCheckResult({ results, summary, brief }) {
   const lines = [`chaos-kane: ${summary.survived} of ${summary.total} injected failures survived.`, ''];
   for (const result of results) {
-    lines.push(`- ${result.scenario}: ${result.outcome}. ${result.reasons[0] ?? ''}`.trimEnd());
+    lines.push(`- ${result.scenario}: ${outcomeLabel(result.outcome)}. ${result.reasons[0] ?? ''}`.trimEnd());
   }
   lines.push('');
   lines.push(brief ?? 'All scenarios survived, so there is nothing to fix.');
@@ -84,6 +86,7 @@ export function createChaosTools({ run, readBrief, outDir = 'reports/mcp' }) {
           truth_url: { type: 'string', description: 'JSON endpoint that lists or counts what the backend stored; enables duplicate detection' },
           noun: { type: 'string', description: 'What the flow creates, for example order or booking' },
           claims: { type: 'string', description: 'Regular expression for what counts as a success message' },
+          agent_claim: { type: 'string', description: 'What the agent claimed, for example "handles API failures"; the result says whether the evidence supports it' },
           repeat: { type: 'integer', description: 'Runs per scenario, majority verdict (default 1)' },
           fault_paths: { type: 'array', items: { type: 'string' }, description: 'Request path prefixes that may be faulted (default /api/)' },
           fault_methods: { type: 'array', items: { type: 'string' }, description: 'HTTP methods that may be faulted (default POST, PUT, PATCH, DELETE)' },

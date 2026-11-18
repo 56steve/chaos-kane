@@ -39,6 +39,27 @@ test('empty status message with no order is a failure to inform', () => {
   assert.equal(result.outcome, 'failed');
 });
 
+test('a retry that creates a second order is a duplicate even when the page says success', () => {
+  const result = judge({
+    statusMessage: 'Order placed! Confirmation ORD-0002',
+    requestStatus: '201',
+    orderCreated: true,
+    orderCount: 2,
+  });
+  assert.equal(result.outcome, 'failed');
+  assert.match(result.reasons.join(' '), /duplicate/i);
+});
+
+test('a retry that ends with exactly one order and a success message survives', () => {
+  const result = judge({
+    statusMessage: 'Order placed! Confirmation ORD-0001',
+    requestStatus: '201',
+    orderCreated: true,
+    orderCount: 1,
+  });
+  assert.equal(result.outcome, 'survived');
+});
+
 test('parseStatusCode reads numeric strings and rejects the rest', () => {
   assert.equal(parseStatusCode('500'), 500);
   assert.equal(parseStatusCode(201), 201);

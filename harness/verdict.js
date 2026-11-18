@@ -32,9 +32,17 @@ function showsFailureNotice(message) {
  * - failed: the shopper was misled or left without a clear answer
  * - incomplete: Kane returned no usable observation, which is never counted as a pass
  */
-export function judge({ statusMessage, requestStatus, orderCreated }) {
+export function judge({ statusMessage, requestStatus, orderCreated, orderCount }) {
   if (typeof statusMessage !== 'string') {
     return { outcome: 'incomplete', reasons: ['Kane returned no status message, so nothing can be judged'] };
+  }
+
+  const count = typeof orderCount === 'number' ? orderCount : Number(orderCreated);
+  if (count > 1) {
+    return {
+      outcome: 'failed',
+      reasons: [`duplicate order: one checkout produced ${count} orders after a retry (page says "${statusMessage.trim()}")`],
+    };
   }
 
   const message = statusMessage.trim();

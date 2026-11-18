@@ -142,7 +142,7 @@ test('a live run shows the headline, the verdict and one screenshot in the share
   assert.equal(el('headline').textContent, '0 of 1 survived');
   assert.equal(el('stageTitle').textContent, 'Server error');
   assert.match(el('verdict').textContent, /fake success/);
-  assert.match(el('said').textContent, /request: HTTP 500 · network log/);
+  assert.deepEqual(el('said').children.map((child) => child.textContent), ['HTTP 500', 'from the network log']);
   assert.equal(el('compare').hidden, false);
   assert.equal(el('cmpBeforeImg').src, 'evidence/error500-1.jpg');
   assert.match(el('cmpBeforeCap').textContent, /Kane's screenshot · ≠ fake success/);
@@ -371,4 +371,17 @@ test('restarting the replay does not add more buttons', async () => {
   el('mode').children[0].children[2].onclick();
   assert.equal(buttons(), 3);
   assert.equal(el('mode').children.length, 1);
+});
+
+test('the layout cannot be resized by its content, so the diagram never zooms in and out', () => {
+  assert.match(LIVE_PAGE, /grid-template-columns: 13rem minmax\(0, 1fr\)/);
+  assert.match(LIVE_PAGE, /\.stage \{ min-width: 0; \}/);
+  assert.match(LIVE_PAGE, /\.layout > \* \{ min-width: 0; \}/);
+  assert.match(LIVE_PAGE, /repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(LIVE_PAGE, /\.layout \{ grid-template-columns: minmax\(0, 1fr\)/, 'the phone layout is fixed too');
+});
+
+test('readout heights and the headline are fixed so nothing below them moves', () => {
+  assert.match(LIVE_PAGE, /\.value \{ min-height: 5\.6rem/);
+  assert.match(LIVE_PAGE, /h1 \{[^}]*white-space: nowrap/);
 });

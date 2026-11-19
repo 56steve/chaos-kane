@@ -89,3 +89,26 @@ test('chaos_scenarios lists every fault', async () => {
     assert.match(text, new RegExp(name));
   }
 });
+
+test('chaos_doctor passes the app and truth URLs on and returns the report text', async () => {
+  const asked = [];
+  const tools = createChaosTools({
+    run: async () => ({}),
+    readBrief: async () => '',
+    doctor: async (options) => {
+      asked.push(options);
+      return [{ id: 'kane', name: 'Kane CLI', status: 'fail', detail: 'not found', fix: 'npm install -g @testmuai/kane-cli' }];
+    },
+  });
+  const doctor = tools.find((tool) => tool.name === 'chaos_doctor');
+  assert.ok(doctor);
+  const text = await doctor.handler({ app_url: 'http://localhost:3000', truth_url: 'http://localhost:3000/api/orders' });
+  assert.deepEqual(asked, [{ app: 'http://localhost:3000', truthUrl: 'http://localhost:3000/api/orders' }]);
+  assert.match(text, /fix: npm install -g @testmuai\/kane-cli/);
+  assert.match(text, /Not ready/);
+});
+
+test('chaos_doctor fails clearly when no doctor was provided', async () => {
+  const doctor = createChaosTools({ run: async () => ({}), readBrief: async () => '' }).find((tool) => tool.name === 'chaos_doctor');
+  await assert.rejects(doctor.handler({}), /not available/);
+});

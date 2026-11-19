@@ -1,4 +1,5 @@
 import { parseArgs } from './cli-args.js';
+import { formatReport } from './doctor.js';
 import { outcomeLabel } from './labels.js';
 
 const QUICK_FAULTS = ['none', 'error500', 'ghost'];
@@ -67,7 +68,7 @@ export function formatCheckResult({ results, summary, brief }) {
  * The MCP tools. `run(config)` performs the check (injected so it can be
  * tested without Kane); `readBrief(path)` loads the written fix brief.
  */
-export function createChaosTools({ run, readBrief, outDir = 'reports/mcp' }) {
+export function createChaosTools({ run, readBrief, doctor, outDir = 'reports/mcp' }) {
   let running = false;
 
   return [
@@ -115,6 +116,26 @@ export function createChaosTools({ run, readBrief, outDir = 'reports/mcp' }) {
       inputSchema: { type: 'object', properties: {} },
       async handler() {
         return SCENARIO_LIST.map(([name, meaning]) => `${name}: ${meaning}`).join('\n');
+      },
+    },
+    {
+      name: 'chaos_doctor',
+      description:
+        'Check that this machine is ready to run chaos_check: Node, Chrome, Kane CLI installed, logged in and with credits, free ports, and optionally that the app and its truth endpoint answer. ' +
+        'Changes nothing and costs no credits. Call it first when chaos_check fails to start; every problem comes with the exact fix.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          app_url: { type: 'string', description: 'URL of the app you plan to check, to confirm it is reachable' },
+          truth_url: { type: 'string', description: 'The truth endpoint you plan to use, to confirm it returns something countable' },
+        },
+      },
+      async handler(args) {
+        if (typeof doctor !== 'function') {
+          throw new Error('doctor is not available in this server');
+        }
+        const results = await doctor({ app: args.app_url, truthUrl: args.truth_url });
+        return formatReport(results);
       },
     },
   ];

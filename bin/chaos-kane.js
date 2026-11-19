@@ -4,11 +4,13 @@ import { SCENARIOS } from '../chaos/proxy.js';
 import { parseArgs } from '../harness/cli-args.js';
 import { createHub } from '../harness/hub.js';
 import { startLiveServer } from '../harness/live.js';
+import { exitCodeFor, formatReport, parseDoctorArgs, runDoctor, toJson } from '../harness/doctor.js';
 import { runFromConfig } from '../harness/runner.js';
 
 const HELP = `chaos-kane: break an app's API with Kane and check what the user is really told
 
 Usage:
+  chaos-kane doctor [--app <url>] [--truth-url <url>] [--json]   check this machine is ready
   chaos-kane --demo
   chaos-kane --app <url> --flow "<what a user does>" [options]
 
@@ -49,7 +51,18 @@ Exit code: 0 all failures survived, 1 at least one was not, 2 no usable result.
 Needs Kane CLI installed and logged in (kane-cli login) and Google Chrome.
 `;
 
+async function runDoctorCommand(argv) {
+  const options = parseDoctorArgs(argv);
+  const results = await runDoctor(options);
+  console.log(options.json ? toJson(results) : formatReport(results));
+  process.exitCode = exitCodeFor(results);
+}
+
 async function main() {
+  if (process.argv[2] === 'doctor') {
+    await runDoctorCommand(process.argv.slice(3));
+    return;
+  }
   const config = parseArgs(process.argv.slice(2), process.env);
   if (config.help) {
     console.log(HELP);

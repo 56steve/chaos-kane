@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFile } from 'node:fs/promises';
 import readline from 'node:readline';
+import { runDoctor } from '../harness/doctor.js';
 import { createMcpServer } from '../harness/mcp.js';
 import { createChaosTools } from '../harness/mcp-tools.js';
 import { runFromConfig } from '../harness/runner.js';
@@ -17,6 +18,7 @@ const server = createMcpServer({
   tools: createChaosTools({
     run: (config) => runFromConfig(config, { log: (line) => process.stderr.write(`${line}\n`) }),
     readBrief: (file) => readFile(file, 'utf8'),
+    doctor: (options) => runDoctor(options),
   }),
 });
 

@@ -37,6 +37,10 @@ Faults (`chaos/proxy.js`): `error500`, `slow` (6s), `timeout`, `garbage` (HTML w
 
 Kane has three roles: **observer** (real Chrome, NDJSON output), **evidence for the agent** (the failing evidence is what the coding agent reads), and **gate** (a Claude Code Stop hook runs Kane before the agent may finish).
 
+## Check your setup
+
+`node bin/chaos-kane.js doctor` (or `npm run doctor`) checks everything a run needs and prints the exact fix for anything missing. It changes nothing and costs no credits. Add `--app <url>` and `--truth-url <url>` to also confirm your app answers and the truth endpoint returns something countable, and `--json` for machine-readable output. Agents get the same check as the `chaos_doctor` MCP tool.
+
 ## Use it on your own app
 
 ```bash
@@ -78,6 +82,7 @@ Needs Node 22+, Google Chrome, and a Kane CLI account with credits (a run costs 
 ```bash
 npm install -g @testmuai/kane-cli
 kane-cli login
+npm run doctor   # checks Node, Chrome, Kane login and credits, ports; says how to fix anything missing
 
 npm test         # unit tests, no Kane needed
 npm run smoke    # proxy and backend checks, no Kane needed

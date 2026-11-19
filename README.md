@@ -113,3 +113,7 @@ docs/       spike findings, CI example
 - Kane is an AI agent and can occasionally observe differently between runs; `--repeat` measures it. The `double` scenario relies on Kane double clicking.
 - The stop hook was tested by running it directly with a failing and a passing checkout, not yet inside a live Claude Code session.
 - Saved Kane output is scrubbed of local paths and share links, but earlier git history was committed before the scrubber existed.
+
+## License
+
+MIT, see [LICENSE](LICENSE).

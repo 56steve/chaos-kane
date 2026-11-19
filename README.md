@@ -54,7 +54,7 @@ node bin/chaos-kane.js \
 
 - `--truth-url` returns JSON listing or counting what the backend stored. With it, duplicates are detected. Without it, the proxy's count of accepted writes is the evidence and duplicate detection is off.
 - `--agent-claim` states what the agent claimed; the report says whether the evidence **supports**, **does not support**, or **can't verify** it.
-- `--claims "<regex>"` sets what counts as a success message; `--faults a,b`, `--repeat 3`, `--fault-paths`, `--fault-methods` tune the run. HTTPS upstreams are supported (the transport is unit tested; it has not been run against a real HTTPS site).
+- `--claims "<regex>"` sets what counts as a success message; `--faults a,b`, `--repeat 3`, `--fault-paths`, `--fault-methods` tune the run. HTTPS upstreams are supported (unit tested, and a read-only Kane run loaded a real HTTPS site through the proxy; that site has no same-origin API writes, so the verdict was correctly *unable to verify*).
 - `--baseline reports/earlier/latest.json` compares with an earlier run and fails only on **new** failures.
 - Outputs in the report folder: `latest.html`, `summary.md` (also appended to the GitHub Actions job summary), and `fix-brief.md` for any coding agent when something did not survive.
 - Exit code: 0 all survived, 1 a failure was found, 2 no usable result.

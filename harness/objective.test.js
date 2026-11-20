@@ -2,16 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { objectiveFor } from './chaos.js';
 
-test('Kane is told to record the main heading of the page when it shows no message', () => {
+test('Kane is told to record the message and the request status, and not to judge', () => {
   const text = objectiveFor('Do the thing.', 'none');
-  assert.match(text, /no message/i);
-  assert.match(text, /main heading/i);
   assert.match(text, /status_message/);
   assert.match(text, /last_request_status/);
+  assert.match(text, /Do not judge the result/);
 });
 
-test('only a blank page is recorded as none, never invented', () => {
-  assert.match(objectiveFor('Do the thing.', 'none'), /'none' only if the page is blank/i);
+test('a missing message is recorded as none, with no extra conditions that could make Kane stop', () => {
+  const text = objectiveFor('Do the thing.', 'none');
+  assert.match(text, /store 'none' if there is none/i);
+  assert.doesNotMatch(text, /main heading/i);
 });
 
 test('the flow comes first, the retry belongs to ghost only and the double click to double only', () => {

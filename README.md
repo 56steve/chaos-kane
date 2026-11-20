@@ -57,7 +57,7 @@ node bin/chaos-kane.js \
 - `--dry-run` prints what would run (scenarios, number of Kane runs, estimated credits) and stops: no browser, no credits.
 - **What gets broken is learned.** The baseline run (`none`) records the writes the flow made, and every fault then hits only the last write that succeeded, the one the flow ends on. A login or other setup request is left alone, so a flow with a sign-in works without configuration. Pass `--fault-paths` or `--fault-methods` to choose yourself.
 - `--max-steps <n>` raises Kane's step budget (default 15) for flows with a login or a long form.
-- `--claims "<regex>"` sets what counts as a success message; `--faults a,b`, `--repeat 3` tune the run. HTTPS upstreams are supported (unit tested, and a read-only Kane run loaded a real HTTPS site through the proxy; that site has no same-origin API writes, so the verdict was correctly *unable to verify*).
+- `--claims "<regex>"` sets what counts as a success message. It is also matched against the page the flow ended on, for apps that show success by moving to a new page (for example `--claims "/article/"`); `--faults a,b`, `--repeat 3` tune the run. HTTPS upstreams are supported (unit tested, and a read-only Kane run loaded a real HTTPS site through the proxy; that site has no same-origin API writes, so the verdict was correctly *unable to verify*).
 - `--baseline reports/earlier/latest.json` compares with an earlier run and fails only on **new** failures.
 - Outputs in the report folder: `latest.html`, `summary.md` (also appended to the GitHub Actions job summary), and `fix-brief.md` for any coding agent when something did not survive.
 - Exit code: 0 all survived, 1 a failure was found, 2 no usable result.

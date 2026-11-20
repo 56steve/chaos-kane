@@ -25,7 +25,7 @@ const RETRY_ONCE =
 const DOUBLE_CLICK =
   'Do not click that last button once: click it twice in very quick succession, two clicks within half a second.';
 const RECORD =
-  "Store the exact text of the confirmation or error message the page shows at the end as 'status_message' (store 'none' if there is none). Store the HTTP status code of the last request the page made that saved or changed data (a POST, PUT, PATCH or DELETE) as 'last_request_status' (store 'no response' if that request got no response). Do not judge the result. Only record these two values.";
+  "Store the exact text of the confirmation or error message the page shows at the end as 'status_message'. If the page shows no message but moved to a new page, store that page's main heading instead. Store 'none' only if the page is blank or unchanged. Store the HTTP status code of the last request the page made that saved or changed data (a POST, PUT, PATCH or DELETE) as 'last_request_status' (store 'no response' if that request got no response). Do not judge the result. Only record these two values.";
 
 /**
  * Builds the Kane objective for one scenario. The ghost scenario adds a retry,

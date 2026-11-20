@@ -51,6 +51,10 @@ Kane has three roles: **observer** (real Chrome, NDJSON output), **evidence for 
 
 `node bin/chaos-kane.js doctor` (or `npm run doctor`) checks everything a run needs and prints the exact fix for anything missing. It changes nothing and costs no credits. Add `--app <url>` and `--truth-url <url>` to also confirm your app answers and the truth endpoint returns something countable, and `--json` for machine-readable output. Agents get the same check as the `chaos_doctor` MCP tool.
 
+## Check the verdicts yourself
+
+Every saved report holds the evidence behind each verdict: what the user saw, the status of the write request, and what the backend really stored. `npm run audit -- reports/replay-before` recomputes each verdict from that evidence alone and compares it with the recorded one. It needs no Kane, no credits and no network, so anyone can confirm that the verdicts follow from the evidence and were not edited. It exits 1 if any verdict differs. The unit tests run it over every committed report. Results marked *unable to verify* depend on live checks (the fault fired, the network log agreed with Kane), so the audit skips them and shows why.
+
 ## Use it on your own app
 
 ```bash

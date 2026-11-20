@@ -211,5 +211,9 @@
         "failed"
       ]
     }
-  ]
+  ],
+  "judging": {
+    "noun": "article",
+    "claims": "/article/"
+  }
 }

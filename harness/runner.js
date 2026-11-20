@@ -106,7 +106,7 @@ export async function runFromConfig(config, { hub = createHub(), onProgress = ()
       hub,
       onProgress,
     });
-    await writeReports({ outDir, name: 'latest', title: 'Chaos Kane resilience report', results });
+    await writeReports({ outDir, name: 'latest', title: 'Chaos Kane resilience report', results, judging: { noun: config.noun, claims: config.claims ?? null } });
 
     const summary = summarize(results);
     const comparison = baselineResults ? compareToBaseline(baselineResults, results) : null;

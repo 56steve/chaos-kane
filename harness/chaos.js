@@ -271,9 +271,10 @@ export async function runChaos({ scenarios = SCENARIOS, outDir, repeat = 1, onPr
   }
 }
 
-export async function writeReports({ outDir, name, title, results }) {
+/** `judging` records the settings the verdicts were made with, so `chaos-kane audit` can recompute them. */
+export async function writeReports({ outDir, name, title, results, judging }) {
   await mkdir(outDir, { recursive: true });
   const generatedAt = new Date().toISOString();
-  await writeFile(path.join(outDir, `${name}.json`), `${JSON.stringify({ generatedAt, results }, null, 2)}\n`);
+  await writeFile(path.join(outDir, `${name}.json`), `${JSON.stringify({ generatedAt, ...(judging ? { judging } : {}), results }, null, 2)}\n`);
   await writeFile(path.join(outDir, `${name}.html`), renderReport({ title, generatedAt, results }));
 }

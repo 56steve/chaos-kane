@@ -5,6 +5,7 @@ import { parseArgs } from '../harness/cli-args.js';
 import { buildPlan, formatPlan } from '../harness/plan.js';
 import { createHub } from '../harness/hub.js';
 import { startLiveServer } from '../harness/live.js';
+import { auditExitCode, auditReport, formatAudit, loadReport, parseAuditArgs } from '../harness/audit.js';
 import { exitCodeFor, formatReport, parseDoctorArgs, runDoctor, toJson } from '../harness/doctor.js';
 import { runFromConfig } from '../harness/runner.js';
 
@@ -12,6 +13,7 @@ const HELP = `chaos-kane: break an app's API with Kane and check what the user i
 
 Usage:
   chaos-kane doctor [--app <url>] [--truth-url <url>] [--json]   check this machine is ready
+  chaos-kane audit <report folder> [--json]                       recompute a saved report's verdicts from its evidence (free, offline)
   chaos-kane --demo
   chaos-kane --app <url> --flow "<what a user does>" [options]
 
@@ -62,7 +64,19 @@ async function runDoctorCommand(argv) {
   process.exitCode = exitCodeFor(results);
 }
 
+async function runAuditCommand(argv) {
+  const options = parseAuditArgs(argv);
+  const { report, file } = await loadReport(options.path);
+  const audit = auditReport(report, options);
+  console.log(options.json ? JSON.stringify({ file, ...audit }, null, 2) : formatAudit(audit, path.relative(process.cwd(), file) || file));
+  process.exitCode = auditExitCode(audit.summary);
+}
+
 async function main() {
+  if (process.argv[2] === 'audit') {
+    await runAuditCommand(process.argv.slice(3));
+    return;
+  }
   if (process.argv[2] === 'doctor') {
     await runDoctorCommand(process.argv.slice(3));
     return;

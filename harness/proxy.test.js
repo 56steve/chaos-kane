@@ -96,3 +96,27 @@ test('writes are counted even when the fault answers them itself', async () => {
     upstream.closeAllConnections();
   }
 });
+
+test('the fault target can be changed while the proxy runs, without changing what is counted', async () => {
+  const upstream = http.createServer((req, res) => {
+    res.writeHead(200);
+    res.end('{}');
+  });
+  await new Promise((resolve) => upstream.listen(0, '127.0.0.1', resolve));
+  const proxy = createChaosProxy(`http://127.0.0.1:${upstream.address().port}`);
+  await new Promise((resolve) => proxy.server.listen(0, '127.0.0.1', resolve));
+  const base = `http://127.0.0.1:${proxy.server.address().port}`;
+  try {
+    proxy.setScenario('error500');
+    assert.equal((await fetch(`${base}/api/users/login`, { method: 'POST' })).status, 500);
+    proxy.setFaultTarget({ prefixes: ['/api/articles'], methods: ['POST'] });
+    assert.equal((await fetch(`${base}/api/users/login`, { method: 'POST' })).status, 200);
+    assert.equal((await fetch(`${base}/api/articles`, { method: 'POST' })).status, 500);
+    assert.equal(proxy.acceptedMutations(), 1);
+  } finally {
+    proxy.server.close();
+    proxy.server.closeAllConnections();
+    upstream.close();
+    upstream.closeAllConnections();
+  }
+});

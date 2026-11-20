@@ -2,6 +2,7 @@
 import path from 'node:path';
 import { SCENARIOS } from '../chaos/proxy.js';
 import { parseArgs } from '../harness/cli-args.js';
+import { buildPlan, formatPlan } from '../harness/plan.js';
 import { createHub } from '../harness/hub.js';
 import { startLiveServer } from '../harness/live.js';
 import { exitCodeFor, formatReport, parseDoctorArgs, runDoctor, toJson } from '../harness/doctor.js';
@@ -31,8 +32,9 @@ Evidence:
 
 Faults:
   --faults a,b              scenarios to run (default: all but double). One of: ${SCENARIOS.join(', ')}
-  --fault-paths /api/,...   request paths that may be faulted (default: /api/)
-  --fault-methods POST,...  methods that may be faulted (default: POST,PUT,PATCH,DELETE)
+  --fault-paths /api/,...   request paths to fault. Default: learned from the baseline run, which faults only
+                            the last write of the flow (the login and setup requests are left alone)
+  --fault-methods POST,...  methods to fault (default: learned, or POST,PUT,PATCH,DELETE)
   --repeat <n>              runs per scenario, majority verdict (default: 1)
   --max-steps <n>           Kane's step budget per run (default: 15); raise it for flows with a login or a long form
 
@@ -40,6 +42,7 @@ Output:
   --out <dir>               report folder (default: reports)
   --proxy-port <n>          port of the fault proxy Kane visits (default: 4100)
   --dashboard-port <n>      port of the live dashboard (default: 4200)
+  --dry-run                 show what would run and what it would cost, then stop (no browser, no credits)
   --no-dashboard            do not start the live dashboard
   --keep-open               keep the dashboard up after the run
 
@@ -67,6 +70,11 @@ async function main() {
   const config = parseArgs(process.argv.slice(2), process.env);
   if (config.help) {
     console.log(HELP);
+    return;
+  }
+
+  if (config.dryRun) {
+    console.log(formatPlan(buildPlan(config)));
     return;
   }
 

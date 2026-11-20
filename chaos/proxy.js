@@ -100,8 +100,11 @@ export function createChaosProxy(targetUrl, options = {}) {
     ghostArmed = name === 'ghost';
   }
 
+  // What gets faulted can be narrowed while running (see setFaultTarget); what gets counted stays as configured.
+  let faultTarget = { prefixes, methods };
+
   function isFaultable(req, pathname) {
-    return methods.includes(req.method ?? '') && prefixes.some((prefix) => pathname.startsWith(prefix));
+    return faultTarget.methods.includes(req.method ?? '') && faultTarget.prefixes.some((prefix) => pathname.startsWith(prefix));
   }
 
   function forwardTracked(req, res, extra = {}) {
@@ -194,6 +197,9 @@ export function createChaosProxy(targetUrl, options = {}) {
     server,
     getScenario: () => scenario,
     setScenario: select,
+    setFaultTarget: (target) => {
+      faultTarget = { prefixes: target.prefixes, methods: target.methods };
+    },
     acceptedMutations: () => accepted,
     writesSeen: () => writes,
     resetAccepted: () => {

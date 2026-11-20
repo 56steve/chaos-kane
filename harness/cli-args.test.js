@@ -2,6 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseArgs } from './cli-args.js';
 
+test('fault targets are automatic unless the paths or methods are given', () => {
+  assert.equal(parseArgs(['--app', 'http://localhost:3000', '--flow', 'x']).autoTarget, true);
+  assert.equal(parseArgs(['--app', 'http://localhost:3000', '--flow', 'x', '--fault-paths', '/api/orders']).autoTarget, false);
+  assert.equal(parseArgs(['--app', 'http://localhost:3000', '--flow', 'x', '--fault-methods', 'POST']).autoTarget, false);
+  assert.equal(parseArgs(['--demo']).autoTarget, false);
+});
+
 test('max steps defaults to 15 and can be raised, but must be a sensible number', () => {
   assert.equal(parseArgs(['--demo']).maxSteps, 15);
   assert.equal(parseArgs(['--demo', '--max-steps', '30']).maxSteps, 30);

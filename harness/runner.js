@@ -101,6 +101,8 @@ export async function runFromConfig(config, { hub = createHub(), onProgress = ()
       proxyOptions: { prefixes: config.faultPaths, methods: config.faultMethods },
       successPattern: config.claims ? new RegExp(config.claims, 'i') : undefined,
       claim: config.agentClaim,
+      autoTarget: config.autoTarget,
+      log,
       hub,
       onProgress,
     });

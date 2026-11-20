@@ -9,6 +9,7 @@ import { runKane } from './kane.js';
 import { renderReport, summarize } from './report.js';
 import { scrubText } from './scrub.js';
 import { crossCheck, readEvidencePack, writeRequestsFromHar } from './evidence.js';
+import { learnFaultTarget, orderScenarios } from './target.js';
 import { applyCrossCheck, applyEvidenceCheck, applyFaultCheck } from './validity.js';
 import { judge } from './verdict.js';
 
@@ -172,6 +173,8 @@ export async function runChaosAgainst({
   successPattern = undefined,
   claim = undefined,
   hub = createHub(),
+  autoTarget = false,
+  log = () => {},
   onProgress = () => {},
 }) {
   const unknown = scenarios.filter((name) => !SCENARIOS.includes(name));
@@ -200,10 +203,23 @@ export async function runChaosAgainst({
   const ctx = { proxy, truth, flow, noun, outDir, proxyPort, hub, successPattern, rules, maxSteps, faultsFired: () => faultCount };
   const results = [];
   try {
-    for (const scenario of scenarios) {
+    const order = autoTarget ? orderScenarios(scenarios) : scenarios;
+    let learned = false;
+    for (const scenario of order) {
       const runs = [];
       for (let runIndex = 1; runIndex <= repeat; runIndex += 1) {
         runs.push(await runScenario({ scenario, runIndex, runs: repeat, ctx }));
+      }
+      if (autoTarget && !learned && scenario === 'none') {
+        const target = runs[0].orderCreated ? learnFaultTarget(runs[0].network) : null;
+        if (target) {
+          proxy.setFaultTarget(target);
+          ctx.rules = { prefixes: target.prefixes, methods: target.methods };
+          learned = true;
+          log(`learned the target from the baseline: faults will hit ${target.methods.join('/')} ${target.prefixes.join(', ')} only (pass --fault-paths to choose yourself)`);
+        } else {
+          log('note: the baseline saved nothing, so the fault target could not be learned; faulting every write under /api/ (pass --fault-paths to choose)');
+        }
       }
       const result = aggregateRuns(runs);
       results.push(result);

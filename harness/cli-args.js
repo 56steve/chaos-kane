@@ -18,7 +18,7 @@ const VALUE_FLAGS = new Set([
   'dashboard-port',
   'out',
 ]);
-const BOOLEAN_FLAGS = new Set(['demo', 'no-dashboard', 'keep-open', 'help']);
+const BOOLEAN_FLAGS = new Set(['demo', 'no-dashboard', 'keep-open', 'dry-run', 'help']);
 
 function splitList(value) {
   return value
@@ -126,6 +126,7 @@ export function parseArgs(argv, env = {}) {
     app,
     flow,
     faults,
+    autoTarget: Boolean(app) && !raw.has('fault-paths') && !raw.has('fault-methods'),
     faultPaths: splitList(raw.get('fault-paths') ?? '/api/'),
     faultMethods: splitList(raw.get('fault-methods') ?? 'POST,PUT,PATCH,DELETE').map((method) => method.toUpperCase()),
     truthUrl,
@@ -139,6 +140,7 @@ export function parseArgs(argv, env = {}) {
     dashboardPort: requireInteger('--dashboard-port', raw.get('dashboard-port') ?? 4200, 1),
     dashboard: !raw.has('no-dashboard'),
     keepOpen: raw.has('keep-open'),
+    dryRun: raw.has('dry-run'),
     out: raw.get('out') ?? env.CHAOS_OUT ?? 'reports',
   };
 }

@@ -1,0 +1,215 @@
+{
+  "generatedAt": "2026-11-20T07:32:39.296Z",
+  "results": [
+    {
+      "scenario": "none",
+      "outcome": "survived",
+      "reasons": [
+        "article was saved and the user was told so"
+      ],
+      "statusMessage": "Taken to /#/article/chaos-test748291",
+      "requestStatus": "201",
+      "statusSource": "network-log",
+      "crossCheck": "agreed",
+      "kaneReportedStatus": "201",
+      "network": [
+        {
+          "method": "POST",
+          "path": "/api/users/login",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/api/articles",
+          "status": 201
+        }
+      ],
+      "screenshot": "evidence/none-1.jpg",
+      "orderCreated": true,
+      "orderCount": 1,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 30.049377500000002,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "survived"
+      ]
+    },
+    {
+      "scenario": "error500",
+      "outcome": "survived",
+      "reasons": [
+        "no article saved and the user saw a clear error: \"Something went wrong. Please try again.\""
+      ],
+      "statusMessage": "Something went wrong. Please try again.",
+      "requestStatus": "500",
+      "statusSource": "network-log",
+      "crossCheck": "agreed",
+      "kaneReportedStatus": "500",
+      "network": [
+        {
+          "method": "POST",
+          "path": "/api/users/login",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/api/articles",
+          "status": 500
+        }
+      ],
+      "screenshot": "evidence/error500-1.jpg",
+      "orderCreated": false,
+      "orderCount": 0,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 29.7866925,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "survived"
+      ]
+    },
+    {
+      "scenario": "garbage",
+      "outcome": "survived",
+      "reasons": [
+        "no article saved and the user saw a clear error: \"The server sent an unexpected reply. Please try again.\""
+      ],
+      "statusMessage": "The server sent an unexpected reply. Please try again.",
+      "requestStatus": "200",
+      "statusSource": "network-log",
+      "crossCheck": "agreed",
+      "kaneReportedStatus": "200",
+      "network": [
+        {
+          "method": "POST",
+          "path": "/api/users/login",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/api/articles",
+          "status": 200
+        }
+      ],
+      "screenshot": "evidence/garbage-1.jpg",
+      "orderCreated": false,
+      "orderCount": 0,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 41.04740999999999,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "survived"
+      ]
+    },
+    {
+      "scenario": "empty",
+      "outcome": "survived",
+      "reasons": [
+        "no article saved and the user saw a clear error: \"The server sent an unexpected reply. Please try again.\""
+      ],
+      "statusMessage": "The server sent an unexpected reply. Please try again.",
+      "requestStatus": "200",
+      "statusSource": "network-log",
+      "crossCheck": "agreed",
+      "kaneReportedStatus": "200",
+      "network": [
+        {
+          "method": "POST",
+          "path": "/api/users/login",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/api/articles",
+          "status": 200
+        }
+      ],
+      "screenshot": "evidence/empty-1.jpg",
+      "orderCreated": false,
+      "orderCount": 0,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 31.2174895,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "survived"
+      ]
+    },
+    {
+      "scenario": "reset",
+      "outcome": "survived",
+      "reasons": [
+        "no article saved and the user saw a clear error: \"Could not reach the server. Please try again.\""
+      ],
+      "statusMessage": "Could not reach the server. Please try again.",
+      "requestStatus": "no response",
+      "statusSource": "network-log",
+      "crossCheck": "agreed",
+      "kaneReportedStatus": "no response",
+      "network": [
+        {
+          "method": "POST",
+          "path": "/api/users/login",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/api/articles",
+          "status": 0
+        }
+      ],
+      "screenshot": "evidence/reset-1.jpg",
+      "orderCreated": false,
+      "orderCount": 0,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 29.627072500000004,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "survived"
+      ]
+    },
+    {
+      "scenario": "ghost",
+      "outcome": "failed",
+      "reasons": [
+        "article was saved but the user saw \"Could not reach the server. Please try again.\" (request got no HTTP status)"
+      ],
+      "statusMessage": "Could not reach the server. Please try again.",
+      "requestStatus": "no response",
+      "statusSource": "network-log",
+      "crossCheck": "agreed",
+      "kaneReportedStatus": "no response",
+      "network": [
+        {
+          "method": "POST",
+          "path": "/api/users/login",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/api/articles",
+          "status": 0
+        }
+      ],
+      "screenshot": "evidence/ghost-1.jpg",
+      "orderCreated": true,
+      "orderCount": 1,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 34.1245775,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "failed"
+      ]
+    }
+  ]
+}

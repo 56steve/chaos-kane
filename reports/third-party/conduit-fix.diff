@@ -1,0 +1,61 @@
+diff --git a/frontend/src/helpers/errorHandler.js b/frontend/src/helpers/errorHandler.js
+index f7248bf..af8e090 100644
+--- a/frontend/src/helpers/errorHandler.js
++++ b/frontend/src/helpers/errorHandler.js
+@@ -1,14 +1,15 @@
+-function errorHandler(error) {
+-  if (!error.response) return console.log(error);
+-
+-  const { status, data } = error.response;
++const FALLBACK_MESSAGE = "Something went wrong. Please try again.";
+ 
+-  if ([401, 403, 404, 422, 500].includes(status)) {
+-    console.log(error.response, data.errors.body[0]);
+-    throw data.errors.body[0];
++// Always throws a plain string, so the page can show it as it is. The API's own
++// message is used when it sent one; anything else (no answer, an HTML error page,
++// an unexpected body) gets a clear fallback instead of crashing the page.
++function errorHandler(error) {
++  if (!error.response) {
++    throw "Could not reach the server. Please try again.";
+   }
+ 
+-  console.dir(error);
++  const message = error.response.data?.errors?.body?.[0];
++  throw typeof message === "string" ? message : FALLBACK_MESSAGE;
+ }
+ 
+ export default errorHandler;
+diff --git a/frontend/src/services/setArticle.js b/frontend/src/services/setArticle.js
+index 58d7ce9..45fa0eb 100644
+--- a/frontend/src/services/setArticle.js
++++ b/frontend/src/services/setArticle.js
+@@ -2,18 +2,24 @@ import axios from "axios";
+ import errorHandler from "../helpers/errorHandler";
+ 
+ async function setArticle({ body, description, headers, slug, tagList, title }) {
++  let data;
+   try {
+-    const { data } = await axios({
++    ({ data } = await axios({
+       data: { article: { title, description, body, tagList } },
+       headers,
+       method: slug ? "PUT" : "POST",
+       url: slug ? `api/articles/${slug}` : "api/articles",
+-    });
+-
+-    return data.article.slug;
++    }));
+   } catch (error) {
+     errorHandler(error);
+   }
++
++  // Only go to the article page when the server really returned an article.
++  const savedSlug = data?.article?.slug;
++  if (!savedSlug) {
++    throw "The server sent an unexpected reply. Please try again.";
++  }
++  return savedSlug;
+ }
+ 
+ export default setArticle;

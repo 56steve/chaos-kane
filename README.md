@@ -17,6 +17,18 @@ Run against a small demo shop (one checkout flow), with the real backend order l
 
 The evidence is committed in [reports/](reports/): `replay-before/` and `replay-after/` (the full before and after runs), `stability/` (3 runs per scenario), the `validate-*` runs, and the raw Kane output behind them.
 
+## On an app we did not write
+
+[Conduit](https://github.com/TonyMckes/conduit-realworld-example-app) is the RealWorld reference app (React and Express). The flow logs in and publishes an article. Nothing was configured except the flow: the baseline run showed chaos-kane which request to break, so the login was left alone.
+
+| Run | Result |
+|---|---|
+| Unmodified Conduit | survived **0 of 5** injected failures. A 500 left a **blank page**. A garbage, empty or dropped reply landed the user on a **"404 Not Found"** page, with nothing saved. |
+| After a small fix to its error handling ([diff](reports/third-party/conduit-fix.diff)) | survived **4 of 5**. The user now sees "Something went wrong", "The server sent an unexpected reply" or "Could not reach the server". |
+| Still failing | a reply lost after the article was saved: the user is told it failed, but the article exists. |
+
+Evidence and screenshots: [before](reports/third-party/conduit-before/) and [after](reports/third-party/conduit-after/).
+
 ## Kane observes, the harness judges
 
 In the first spike Kane was asked to pass or fail a fake-success checkout and it **passed it** ([docs/spike-findings.md](docs/spike-findings.md)). Told to extract the page text and the HTTP status of the write request, it reported both correctly. So Kane is the observer in a real browser, and [harness/verdict.js](harness/verdict.js) decides from three facts: what the user saw, what the request returned, and how many records the backend really stored.

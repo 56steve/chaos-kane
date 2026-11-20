@@ -1,0 +1,215 @@
+{
+  "generatedAt": "2026-11-20T07:17:33.044Z",
+  "results": [
+    {
+      "scenario": "none",
+      "outcome": "survived",
+      "reasons": [
+        "article was saved and the user was told so"
+      ],
+      "statusMessage": "Taken to /#/article/chaos-test482917",
+      "requestStatus": "201",
+      "statusSource": "network-log",
+      "crossCheck": "agreed",
+      "kaneReportedStatus": "201",
+      "network": [
+        {
+          "method": "POST",
+          "path": "/api/users/login",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/api/articles",
+          "status": 201
+        }
+      ],
+      "screenshot": "evidence/none-1.jpg",
+      "orderCreated": true,
+      "orderCount": 1,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 40.176342500000004,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "survived"
+      ]
+    },
+    {
+      "scenario": "error500",
+      "outcome": "failed",
+      "reasons": [
+        "no article saved and no clear error shown; page says \"none\" (request returned HTTP 500)"
+      ],
+      "statusMessage": "none",
+      "requestStatus": "500",
+      "statusSource": "network-log",
+      "crossCheck": "agreed",
+      "kaneReportedStatus": "500",
+      "network": [
+        {
+          "method": "POST",
+          "path": "/api/users/login",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/api/articles",
+          "status": 500
+        }
+      ],
+      "screenshot": "evidence/error500-1.jpg",
+      "orderCreated": false,
+      "orderCount": 0,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 29.199515,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "failed"
+      ]
+    },
+    {
+      "scenario": "garbage",
+      "outcome": "failed",
+      "reasons": [
+        "no article saved and no clear error shown; page says \"404 Not Found\" (request returned HTTP 200)"
+      ],
+      "statusMessage": "404 Not Found",
+      "requestStatus": "200",
+      "statusSource": "network-log",
+      "crossCheck": "agreed",
+      "kaneReportedStatus": "200",
+      "network": [
+        {
+          "method": "POST",
+          "path": "/api/users/login",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/api/articles",
+          "status": 200
+        }
+      ],
+      "screenshot": "evidence/garbage-1.jpg",
+      "orderCreated": false,
+      "orderCount": 0,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 29.0322025,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "failed"
+      ]
+    },
+    {
+      "scenario": "empty",
+      "outcome": "failed",
+      "reasons": [
+        "no article saved and no clear error shown; page says \"404 Not Found\" (request returned HTTP 200)"
+      ],
+      "statusMessage": "404 Not Found",
+      "requestStatus": "200",
+      "statusSource": "network-log",
+      "crossCheck": "agreed",
+      "kaneReportedStatus": "200",
+      "network": [
+        {
+          "method": "POST",
+          "path": "/api/users/login",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/api/articles",
+          "status": 200
+        }
+      ],
+      "screenshot": "evidence/empty-1.jpg",
+      "orderCreated": false,
+      "orderCount": 0,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 33.041827999999995,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "failed"
+      ]
+    },
+    {
+      "scenario": "reset",
+      "outcome": "failed",
+      "reasons": [
+        "no article saved and no clear error shown; page says \"404 Not Found\" (request got no HTTP status)"
+      ],
+      "statusMessage": "404 Not Found",
+      "requestStatus": "no response",
+      "statusSource": "network-log",
+      "crossCheck": "agreed",
+      "kaneReportedStatus": "no response",
+      "network": [
+        {
+          "method": "POST",
+          "path": "/api/users/login",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/api/articles",
+          "status": 0
+        }
+      ],
+      "screenshot": "evidence/reset-1.jpg",
+      "orderCreated": false,
+      "orderCount": 0,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 28.545344999999998,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "failed"
+      ]
+    },
+    {
+      "scenario": "ghost",
+      "outcome": "failed",
+      "reasons": [
+        "article was saved but the user saw \"404 Not Found\" (request got no HTTP status)"
+      ],
+      "statusMessage": "404 Not Found",
+      "requestStatus": "no response",
+      "statusSource": "network-log",
+      "crossCheck": "agreed",
+      "kaneReportedStatus": "no response",
+      "network": [
+        {
+          "method": "POST",
+          "path": "/api/users/login",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/api/articles",
+          "status": 0
+        }
+      ],
+      "screenshot": "evidence/ghost-1.jpg",
+      "orderCreated": true,
+      "orderCount": 1,
+      "evidence": "backend",
+      "kaneExitCode": 0,
+      "credits": 37.359135,
+      "agreement": "1/1",
+      "stable": true,
+      "runOutcomes": [
+        "failed"
+      ]
+    }
+  ]
+}

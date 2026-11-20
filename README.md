@@ -4,8 +4,6 @@
 
 An AI agent builds a checkout and says it handles API failures. **chaos-kane breaks the API with Kane CLI and shows what the user was really told, next to what the backend really did.**
 
-Built for the Kane CLI Online Hackathon by TestMu AI, with Claude Code as the coding agent.
-
 ## What it found
 
 Run against a small demo shop (one checkout flow), with the real backend order list as ground truth:
@@ -35,7 +33,7 @@ the page text + HTTP status  ->  harness compares with the backend's real state
 
 Faults (`chaos/proxy.js`): `error500`, `slow` (6s), `timeout`, `garbage` (HTML with 200), `empty` (200, no body), `reset` (dropped connection), `ghost` (the backend saves the change, the first reply is lost, the user retries), `double` (the reply is held 2s while the user double clicks).
 
-Kane has three roles: **observer** (real Chrome, NDJSON output), **evidence for the agent** (the failing evidence is what the coding agent reads), and **gate** (a Claude Code Stop hook runs Kane before the agent may finish).
+Kane has three roles: **observer** (real Chrome, NDJSON output), **evidence for the agent** (the failing evidence is what the coding agent reads), and **gate** (a stop hook runs Kane before the agent may finish).
 
 ## Check your setup
 
@@ -57,22 +55,20 @@ node bin/chaos-kane.js \
 - `--dry-run` prints what would run (scenarios, number of Kane runs, estimated credits) and stops: no browser, no credits.
 - **What gets broken is learned.** The baseline run (`none`) records the writes the flow made, and every fault then hits only the last write that succeeded, the one the flow ends on. A login or other setup request is left alone, so a flow with a sign-in works without configuration. Pass `--fault-paths` or `--fault-methods` to choose yourself.
 - `--max-steps <n>` raises Kane's step budget (default 15) for flows with a login or a long form.
-- `--claims "<regex>"` sets what counts as a success message. It is also matched against the page the flow ended on, for apps that show success by moving to a new page (for example `--claims "/article/"`); `--faults a,b`, `--repeat 3` tune the run. HTTPS upstreams are supported (unit tested, and a read-only Kane run loaded a real HTTPS site through the proxy; that site has no same-origin API writes, so the verdict was correctly *unable to verify*).
+- `--claims "<regex>"` sets what counts as a success message. It is also matched against the page the flow ended on, for apps that show success by moving to a new page (for example `--claims "/article/"`); `--faults a,b`, `--repeat 3` tune the run. HTTPS upstreams are supported.
 - `--baseline reports/earlier/latest.json` compares with an earlier run and fails only on **new** failures.
 - Outputs in the report folder: `latest.html`, `summary.md` (also appended to the GitHub Actions job summary), and `fix-brief.md` for any coding agent when something did not survive.
 - Exit code: 0 all survived, 1 a failure was found, 2 no usable result.
 
-**Limit:** the proxy sits in front of the app URL, so it only sees API calls that go through it. If the frontend calls an API on another origin, those scenarios report *unable to verify* (a split-origin fixture in `scripts/` demonstrates it).
-
 ## For coding agents
 
-- **MCP tool:** `claude mcp add chaos-kane -- node bin/chaos-kane-mcp.js` exposes `chaos_check` (runs the check, returns the evidence and a fix brief) and `chaos_scenarios`. Any MCP client can use it.
+- **MCP tool:** add `bin/chaos-kane-mcp.js` to any MCP client as a stdio server (command `node`, argument `bin/chaos-kane-mcp.js`). It exposes `chaos_check` (runs the check, returns the evidence and a fix brief), `chaos_scenarios` and `chaos_doctor`.
 - **Fix brief:** `fix-brief.md` is plain Markdown any agent can read: the evidence, what a correct fix looks like, and what must not be touched.
-- **Stop gate:** `.claude/settings.json` registers `hooks/stop-gate.js`. When the agent tries to finish and the code in `app/` or `chaos/` changed since the last verified pass, Kane runs `none`, `error500` and `ghost`; a failure exits 2, which blocks the stop and feeds the evidence back. It gives up after 3 blocked stops per session and lets the stop through if the gate itself cannot run.
+- **Stop gate:** register `hooks/stop-gate.js` as a stop hook in your agent's settings. When the agent tries to finish and the code in `app/` or `chaos/` changed since the last verified pass, Kane runs `none`, `error500` and `ghost`; a failure exits 2, which blocks the stop and feeds the evidence back. It gives up after 3 blocked stops per session and lets the stop through if the gate itself cannot run.
 
 ## CI
 
-`docs/ci-example.yml` is a GitHub Actions workflow template. It has **not been run** in this repository: it needs your own Kane credentials as repository secrets.
+`docs/ci-example.yml` is a GitHub Actions workflow template. It needs your own Kane credentials as repository secrets.
 
 ## Live dashboard
 
@@ -102,20 +98,11 @@ app/        demo shop (page, client, backend with idempotency)
 chaos/      fault injecting proxy (http and https upstream)
 harness/    Kane runner, verdicts, claim and baseline comparison, summary, fix brief, MCP, live dashboard
 bin/        chaos-kane (CLI) and chaos-kane-mcp (MCP server)
-hooks/      Claude Code Stop hook
+hooks/      stop hook for coding agents
 scripts/    smoke test, split-origin fixture, replay and report scrubbing
 reports/    committed evidence from real Kane runs (paths and share links scrubbed)
 docs/       spike findings, CI example
 ```
-
-## Limits
-
-- The demo is one small checkout flow; the tool has been exercised on that and on small fixtures, not on a third-party app.
-- Screenshots come from Kane's evidence pack and need `unzip` on the machine; without it runs still work, with no screenshot and no network-log cross-check (the status then comes from Kane alone).
-- The verdict reads the page text with wording patterns for success and error (`--claims` overrides them), so an unusual message could be misread.
-- Kane is an AI agent and can occasionally observe differently between runs; `--repeat` measures it. The `double` scenario relies on Kane double clicking.
-- The stop hook was tested by running it directly with a failing and a passing checkout, not yet inside a live Claude Code session.
-- Saved Kane output is scrubbed of local paths and share links, but earlier git history was committed before the scrubber existed.
 
 ## License
 

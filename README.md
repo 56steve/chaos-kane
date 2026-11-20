@@ -52,7 +52,7 @@ node bin/chaos-kane.js \
   --agent-claim "the checkout handles API failures"
 ```
 
-- `--truth-url` returns JSON listing or counting what the backend stored. With it, duplicates are detected. Without it, the proxy's count of accepted writes is the evidence and duplicate detection is off.
+- `--truth-url` returns JSON listing or counting what the backend stored. If the list is paginated, the total it reports (`total`, `totalCount`, `articlesCount`, ...) is used; a list without a total is counted by its length, so give it a URL that returns everything (for example `?limit=1000`). With it, duplicates are detected. Without it, the proxy's count of accepted writes is the evidence and duplicate detection is off.
 - `--agent-claim` states what the agent claimed; the report says whether the evidence **supports**, **does not support**, or **can't verify** it.
 - `--dry-run` prints what would run (scenarios, number of Kane runs, estimated credits) and stops: no browser, no credits.
 - **What gets broken is learned.** The baseline run (`none`) records the writes the flow made, and every fault then hits only the last write that succeeded, the one the flow ends on. A login or other setup request is left alone, so a flow with a sign-in works without configuration. Pass `--fault-paths` or `--fault-methods` to choose yourself.

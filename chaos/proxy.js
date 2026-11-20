@@ -1,5 +1,6 @@
 import http from 'node:http';
 import https from 'node:https';
+import { isRewritable, rewriteLocation, rewriteSetCookie, rewriteText, upstreamRequestHeaders } from './rewrite.js';
 
 export const SCENARIOS = ['none', 'error500', 'slow', 'timeout', 'garbage', 'empty', 'reset', 'ghost', 'double'];
 
@@ -37,22 +38,51 @@ function sendText(res, status, contentType, body) {
  */
 function forward(req, res, target, { dropResponse = false, onUpstream = () => {} } = {}) {
   const secure = target.protocol === 'https:';
+  const proxyOrigin = `http://${req.headers.host}`;
   const upstream = upstreamModule(target).request(
     {
       hostname: target.hostname,
       port: target.port || (secure ? 443 : 80),
       path: req.url,
       method: req.method,
-      headers: { ...req.headers, host: target.host },
+      headers: upstreamRequestHeaders(req.headers, target, proxyOrigin),
     },
     (upstreamRes) => {
+      const status = upstreamRes.statusCode ?? 502;
       onUpstream(upstreamRes.statusCode ?? 0);
       if (dropResponse) {
         upstreamRes.resume();
         upstreamRes.on('end', () => req.socket.destroy());
         return;
       }
-      res.writeHead(upstreamRes.statusCode ?? 502, upstreamRes.headers);
+
+      // Keep the browser on the proxy: the site's own address is pointed back at it, and
+      // headers that would make the browser upgrade to https or refuse the cookies are dropped.
+      const headers = { ...upstreamRes.headers };
+      delete headers['content-security-policy'];
+      delete headers['content-security-policy-report-only'];
+      delete headers['strict-transport-security'];
+      if (headers.location) {
+        headers.location = rewriteLocation(headers.location, target, proxyOrigin);
+      }
+      if (headers['set-cookie']) {
+        headers['set-cookie'] = rewriteSetCookie(headers['set-cookie']);
+      }
+
+      const hasBody = req.method !== 'HEAD' && status !== 204 && status !== 304 && status >= 200;
+      if (hasBody && !headers['content-encoding'] && isRewritable(headers['content-type'])) {
+        const chunks = [];
+        upstreamRes.on('data', (chunk) => chunks.push(chunk));
+        upstreamRes.on('end', () => {
+          const body = rewriteText(Buffer.concat(chunks).toString('utf8'), target, proxyOrigin);
+          delete headers['transfer-encoding'];
+          headers['content-length'] = Buffer.byteLength(body);
+          res.writeHead(status, headers);
+          res.end(body);
+        });
+        return;
+      }
+      res.writeHead(status, headers);
       upstreamRes.pipe(res);
     },
   );

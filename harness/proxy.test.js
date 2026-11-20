@@ -120,3 +120,54 @@ test('the fault target can be changed while the proxy runs, without changing wha
     upstream.closeAllConnections();
   }
 });
+
+test('a site that writes its own absolute address stays inside the proxy, and the browser never leaves it', async () => {
+  let seen;
+  let origin;
+  const upstream = http.createServer((req, res) => {
+    seen = req.headers;
+    if (req.url === '/') {
+      const body = `<a href="${origin}/cart">cart</a><script>fetch("${origin}/api/add",{method:"POST"})</script>`;
+      res.writeHead(200, { 'content-type': 'text/html', 'content-security-policy': 'upgrade-insecure-requests', 'set-cookie': ['sid=1; Domain=127.0.0.1; Secure; SameSite=None'] });
+      res.end(body);
+    } else if (req.url === '/go') {
+      res.writeHead(302, { location: `${origin}/cart` });
+      res.end();
+    } else if (req.url === '/logo.bin') {
+      res.writeHead(200, { 'content-type': 'application/octet-stream' });
+      res.end(Buffer.from(`${origin} stays as it is`));
+    } else {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end('{}');
+    }
+  });
+  await new Promise((resolve) => upstream.listen(0, '127.0.0.1', resolve));
+  origin = `http://127.0.0.1:${upstream.address().port}`;
+  const proxy = createChaosProxy(origin);
+  await new Promise((resolve) => proxy.server.listen(0, '127.0.0.1', resolve));
+  const base = `http://127.0.0.1:${proxy.server.address().port}`;
+  try {
+    const page = await fetch(`${base}/`, { headers: { origin: base, referer: `${base}/start`, 'accept-encoding': 'gzip' } });
+    const html = await page.text();
+    assert.ok(html.includes(`href="${base}/cart"`), html);
+    assert.ok(html.includes(`fetch("${base}/api/add"`), html);
+    assert.equal(html.includes(origin), false);
+    assert.equal(Number(page.headers.get('content-length')), Buffer.byteLength(html));
+    assert.equal(page.headers.get('content-security-policy'), null);
+    assert.equal(page.headers.get('set-cookie'), 'sid=1; SameSite=Lax');
+    assert.equal(seen.origin, origin);
+    assert.equal(seen.referer, `${origin}/start`);
+    assert.equal(seen['accept-encoding'], 'identity');
+
+    const redirect = await fetch(`${base}/go`, { redirect: 'manual' });
+    assert.equal(redirect.headers.get('location'), `${base}/cart`);
+
+    const binary = Buffer.from(await (await fetch(`${base}/logo.bin`)).arrayBuffer()).toString();
+    assert.ok(binary.startsWith(origin));
+  } finally {
+    proxy.server.close();
+    proxy.server.closeAllConnections();
+    upstream.close();
+    upstream.closeAllConnections();
+  }
+});

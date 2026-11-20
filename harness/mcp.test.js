@@ -66,3 +66,75 @@ test('ping answers with an empty result', async () => {
   const reply = await server().handle({ jsonrpc: '2.0', id: 8, method: 'ping' });
   assert.deepEqual(reply.result, {});
 });
+
+const callWith = (tool, meta) => ({
+  jsonrpc: '2.0', id: 10, method: 'tools/call', params: { name: tool.name, arguments: {}, ...(meta ? { _meta: meta } : {}) },
+});
+
+test('with a progress token, a tool can report progress and the client gets increasing notifications', async () => {
+  const sent = [];
+  const slow = {
+    name: 'slow', description: 'x', inputSchema: { type: 'object' },
+    handler: async (_args, { progress }) => {
+      progress('first step');
+      progress('second step');
+      return 'done';
+    },
+  };
+  const reply = await server([slow]).handle(callWith(slow, { progressToken: 'tok-1' }), (message) => sent.push(message));
+  assert.equal(reply.result.content[0].text, 'done');
+  assert.deepEqual(sent.map((m) => m.method), ['notifications/progress', 'notifications/progress']);
+  assert.deepEqual(sent.map((m) => m.params.message), ['first step', 'second step']);
+  assert.ok(sent.every((m) => m.params.progressToken === 'tok-1' && m.jsonrpc === '2.0' && !('id' in m)));
+  assert.ok(sent[1].params.progress > sent[0].params.progress);
+});
+
+test('without a progress token, progress calls are harmless and nothing is sent', async () => {
+  const sent = [];
+  const quiet = {
+    name: 'quiet', description: 'x', inputSchema: { type: 'object' },
+    handler: async (_args, { progress }) => {
+      progress('ignored');
+      return 'ok';
+    },
+  };
+  const reply = await server([quiet]).handle(callWith(quiet), (message) => sent.push(message));
+  assert.equal(reply.result.content[0].text, 'ok');
+  assert.deepEqual(sent, []);
+});
+
+test('a long call sends a heartbeat so the client keeps waiting, and stops when the call ends', async () => {
+  const sent = [];
+  const waiting = {
+    name: 'waiting', description: 'x', inputSchema: { type: 'object' },
+    handler: async () => {
+      await new Promise((resolve) => setTimeout(resolve, 90));
+      return 'finished';
+    },
+  };
+  const core = createMcpServer({ name: 'chaos-kane', version: '1', tools: [waiting], heartbeatMs: 20 });
+  await core.handle(callWith(waiting, { progressToken: 7 }), (message) => sent.push(message));
+  const countAtEnd = sent.length;
+  assert.ok(countAtEnd >= 2, `expected heartbeats, got ${countAtEnd}`);
+  assert.ok(sent.every((m) => m.params.progressToken === 7));
+  assert.deepEqual(sent.map((m) => m.params.progress), [...sent.map((m) => m.params.progress)].sort((a, b) => a - b));
+  await new Promise((resolve) => setTimeout(resolve, 60));
+  assert.equal(sent.length, countAtEnd);
+});
+
+test('a failing tool still stops its heartbeat', async () => {
+  const sent = [];
+  const failing = {
+    name: 'failing', description: 'x', inputSchema: { type: 'object' },
+    handler: async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      throw new Error('boom');
+    },
+  };
+  const core = createMcpServer({ name: 'chaos-kane', version: '1', tools: [failing], heartbeatMs: 15 });
+  const reply = await core.handle(callWith(failing, { progressToken: 'x' }), (message) => sent.push(message));
+  assert.equal(reply.result.isError, true);
+  const countAtEnd = sent.length;
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  assert.equal(sent.length, countAtEnd);
+});

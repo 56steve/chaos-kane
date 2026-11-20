@@ -118,3 +118,39 @@ test('max_steps reaches the command line, and is left out when not given', () =>
   assert.equal(withSteps[withSteps.indexOf('--max-steps') + 1], '30');
   assert.equal(buildChaosArgv({ app_url: 'http://localhost:3000', flow: 'x' }, 'out').includes('--max-steps'), false);
 });
+
+test('chaos_check reports each log line and finished scenario as progress while it runs', async () => {
+  const messages = [];
+  const [check] = createChaosTools({
+    run: async (_config, hooks) => {
+      hooks.log('learned the target from the baseline');
+      hooks.onProgress({ scenario: 'none', outcome: 'survived' });
+      hooks.onProgress({ scenario: 'error500', outcome: 'failed' });
+      return { results, summary, briefPath: null, exitCode: 1 };
+    },
+    readBrief: async () => '',
+  });
+  await check.handler({ app_url: 'http://localhost:3000', flow: 'x' }, { progress: (text) => messages.push(text) });
+  assert.equal(messages[0], 'learned the target from the baseline');
+  assert.match(messages[1], /^none: survived/);
+  assert.match(messages[2], /^error500: failed/);
+});
+
+test('chaos_check still works when the client asks for no progress', async () => {
+  const [check] = createChaosTools({
+    run: async (_config, hooks) => {
+      hooks.log('anything');
+      hooks.onProgress({ scenario: 'none', outcome: 'survived' });
+      return { results, summary, briefPath: null, exitCode: 1 };
+    },
+    readBrief: async () => '',
+  });
+  assert.match(await check.handler({ app_url: 'http://localhost:3000', flow: 'x' }), /injected failures survived/);
+});
+
+test('the tool description warns that a check takes minutes and how to make it quicker', () => {
+  const [check] = createChaosTools({ run: async () => ({}), readBrief: async () => '' });
+  assert.match(check.description, /minutes/i);
+  assert.match(check.description, /error500/);
+  assert.match(check.inputSchema.properties.faults.description, /quick/i);
+});

@@ -16,7 +16,14 @@ const server = createMcpServer({
   name: 'chaos-kane',
   version: '0.3.0',
   tools: createChaosTools({
-    run: (config) => runFromConfig(config, { log: (line) => process.stderr.write(`${line}\n`) }),
+    run: (config, hooks = {}) =>
+      runFromConfig(config, {
+        log: (line) => {
+          process.stderr.write(`${line}\n`);
+          hooks.log?.(line);
+        },
+        onProgress: hooks.onProgress,
+      }),
     readBrief: (file) => readFile(file, 'utf8'),
     doctor: (options) => runDoctor(options),
   }),
@@ -38,7 +45,7 @@ lines.on('line', (line) => {
     send({ jsonrpc: '2.0', id: null, error: { code: -32700, message: 'parse error' } });
     return;
   }
-  server.handle(message).then((reply) => {
+  server.handle(message, send).then((reply) => {
     if (reply) {
       send(reply);
     }

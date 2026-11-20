@@ -66,7 +66,7 @@ export function formatCheckResult({ results, summary, brief }) {
 }
 
 /**
- * The MCP tools. `run(config)` performs the check (injected so it can be
+ * The MCP tools. `run(config, { log, onProgress })` performs the check (injected so it can be
  * tested without Kane); `readBrief(path)` loads the written fix brief.
  */
 export function createChaosTools({ run, readBrief, doctor, outDir = 'reports/mcp' }) {
@@ -78,13 +78,14 @@ export function createChaosTools({ run, readBrief, doctor, outDir = 'reports/mcp
       description:
         'Break the API of a running web app with Kane CLI and check whether what the user sees matches what the backend really did. ' +
         'Drives the given user flow in a real browser while a proxy injects faults (HTTP 500, no answer, bad body, dropped connection, a lost reply that causes duplicates). ' +
-        'Returns which scenarios survived, the evidence for each failure, and a fix brief. Takes a few minutes. Only works on same-origin apps whose API calls go through the app URL.',
+        'Returns which scenarios survived, the evidence for each failure, and a fix brief. A check takes several minutes (roughly 2 to 3 minutes per scenario), and progress is reported while it runs. ' +
+        'For a quick check pass faults ["none", "error500"]. Works on apps whose API calls go through the app URL.',
       inputSchema: {
         type: 'object',
         properties: {
           app_url: { type: 'string', description: 'URL of the running web app, for example http://localhost:3000' },
           flow: { type: 'string', description: 'What a user does, in plain English, ending with the action that saves something' },
-          faults: { type: 'array', items: { type: 'string' }, description: 'Scenarios to run (default: none, error500, ghost). See chaos_scenarios.' },
+          faults: { type: 'array', items: { type: 'string' }, description: 'Scenarios to run (default: none, error500, ghost). For a quick check use ["none", "error500"]. See chaos_scenarios.' },
           truth_url: { type: 'string', description: 'JSON endpoint that lists or counts what the backend stored; enables duplicate detection' },
           noun: { type: 'string', description: 'What the flow creates, for example order or booking' },
           claims: { type: 'string', description: 'Regular expression for what counts as a success message' },
@@ -97,14 +98,17 @@ export function createChaosTools({ run, readBrief, doctor, outDir = 'reports/mcp
         },
         required: ['app_url', 'flow'],
       },
-      async handler(args) {
+      async handler(args, { progress = () => {} } = {}) {
         if (running) {
           throw new Error('a chaos_check run is already in progress; wait for it to finish');
         }
         running = true;
         try {
           const config = parseArgs(buildChaosArgv(args, outDir));
-          const outcome = await run(config);
+          const outcome = await run(config, {
+            log: (line) => progress(line),
+            onProgress: (result) => progress(`${result.scenario}: ${outcomeLabel(result.outcome)}`),
+          });
           const brief = outcome.briefPath ? await readBrief(outcome.briefPath) : null;
           return formatCheckResult({ results: outcome.results, summary: outcome.summary, brief });
         } finally {

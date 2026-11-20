@@ -94,6 +94,7 @@ export async function runFromConfig(config, { hub = createHub(), onProgress = ()
       flow,
       scenarios: config.faults ?? SCENARIOS.filter((name) => name !== 'double'),
       repeat: config.repeat,
+      maxSteps: config.maxSteps,
       outDir,
       truth,
       noun: config.noun,

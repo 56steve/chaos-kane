@@ -112,3 +112,9 @@ test('chaos_doctor fails clearly when no doctor was provided', async () => {
   const doctor = createChaosTools({ run: async () => ({}), readBrief: async () => '' }).find((tool) => tool.name === 'chaos_doctor');
   await assert.rejects(doctor.handler({}), /not available/);
 });
+
+test('max_steps reaches the command line, and is left out when not given', () => {
+  const withSteps = buildChaosArgv({ app_url: 'http://localhost:3000', flow: 'x', max_steps: 30 }, 'out');
+  assert.equal(withSteps[withSteps.indexOf('--max-steps') + 1], '30');
+  assert.equal(buildChaosArgv({ app_url: 'http://localhost:3000', flow: 'x' }, 'out').includes('--max-steps'), false);
+});

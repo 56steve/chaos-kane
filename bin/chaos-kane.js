@@ -34,6 +34,7 @@ Faults:
   --fault-paths /api/,...   request paths that may be faulted (default: /api/)
   --fault-methods POST,...  methods that may be faulted (default: POST,PUT,PATCH,DELETE)
   --repeat <n>              runs per scenario, majority verdict (default: 1)
+  --max-steps <n>           Kane's step budget per run (default: 15); raise it for flows with a login or a long form
 
 Output:
   --out <dir>               report folder (default: reports)

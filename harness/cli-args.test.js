@@ -2,6 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseArgs } from './cli-args.js';
 
+test('max steps defaults to 15 and can be raised, but must be a sensible number', () => {
+  assert.equal(parseArgs(['--demo']).maxSteps, 15);
+  assert.equal(parseArgs(['--demo', '--max-steps', '30']).maxSteps, 30);
+  assert.throws(() => parseArgs(['--demo', '--max-steps', '2']), /--max-steps/);
+  assert.throws(() => parseArgs(['--demo', '--max-steps', 'many']), /--max-steps/);
+});
+
 test('demo mode needs nothing else', () => {
   const config = parseArgs(['--demo']);
   assert.equal(config.demo, true);

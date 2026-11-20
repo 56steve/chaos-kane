@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { crossCheck, pickFinalScreenshot, pickHar, readEvidencePack, writeRequestsFromHar } from './evidence.js';
+import { crossCheck, pickFinalScreenshot, pickHars, readEvidencePack, writeRequestsFromHar } from './evidence.js';
 
 const names = [
   'run.yaml',
@@ -27,9 +27,25 @@ test('annotated images and unrelated files are never picked as the screenshot', 
   assert.equal(pickFinalScreenshot(['tests/x/steps/3-0-3/annotated.png', 'run.yaml']), null);
 });
 
-test('the network log entry is found by name', () => {
-  assert.equal(pickHar(names), 'tests/checkout--abc/logs/0-network.har');
-  assert.equal(pickHar(['run.yaml']), null);
+test('network logs are found by name', () => {
+  assert.deepEqual(pickHars(names), ['tests/checkout--abc/logs/0-network.har']);
+  assert.deepEqual(pickHars(['run.yaml']), []);
+});
+
+test('Kane splits the network log into numbered files: all are found, in numeric order', () => {
+  const found = pickHars([
+    'tests/t--1/logs/10-network.har',
+    'tests/t--1/logs/2-network.har',
+    'tests/t--1/logs/0-network.har',
+    'tests/t--1/logs/1-network.har',
+    'tests/t--1/logs/console.log',
+  ]);
+  assert.deepEqual(found, [
+    'tests/t--1/logs/0-network.har',
+    'tests/t--1/logs/1-network.har',
+    'tests/t--1/logs/2-network.har',
+    'tests/t--1/logs/10-network.har',
+  ]);
 });
 
 test('only write requests are read from the network log, with path and status', () => {
@@ -127,13 +143,30 @@ test('an evidence pack is read without extracting it to disk', { skip: !haveZip 
 
   const pack = await readEvidencePack(session);
   assert.equal(pack.screenshot.toString(), 'LAST');
-  assert.equal(writeRequestsFromHar(pack.harText)[0].status, 500);
+  assert.equal(pack.harTexts.length, 1);
+  assert.equal(writeRequestsFromHar(pack.harTexts[0])[0].status, 500);
+});
+
+test('a login in the first log and the real write in the second are both read, in order', { skip: !haveZip }, async () => {
+  const work = mkdtempSync(path.join(os.tmpdir(), 'ck-evidence-'));
+  const content = path.join(work, 'content');
+  mkdirSync(path.join(content, 'tests/t--1/logs'), { recursive: true });
+  writeFileSync(path.join(content, 'tests/t--1/logs/0-network.har'), har([['POST', 'http://a.test/api/users/login', 200]]));
+  writeFileSync(path.join(content, 'tests/t--1/logs/1-network.har'), har([['POST', 'http://a.test/api/articles', 0]]));
+  const session = path.join(work, 'session');
+  mkdirSync(path.join(session, 'evidence'), { recursive: true });
+  execFileSync('zip', ['-q', '-r', path.join(session, 'evidence', 'pack.evidence'), '.'], { cwd: content });
+
+  const pack = await readEvidencePack(session);
+  const requests = pack.harTexts.flatMap((text) => writeRequestsFromHar(text));
+  assert.deepEqual(requests.map((request) => request.path), ['/api/users/login', '/api/articles']);
+  assert.equal(requests.at(-1).status, 0);
 });
 
 test('a missing session or pack gives empty evidence instead of an error', async () => {
   const none = await readEvidencePack('/definitely/not/a/session');
   assert.equal(none.screenshot, null);
-  assert.equal(none.harText, null);
+  assert.deepEqual(none.harTexts, []);
   const unset = await readEvidencePack(undefined);
   assert.equal(unset.screenshot, null);
 });

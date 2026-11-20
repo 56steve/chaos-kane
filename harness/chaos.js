@@ -79,7 +79,7 @@ function feedText(line) {
 }
 
 async function runScenario({ scenario, runIndex, runs, ctx }) {
-  const { proxy, truth, flow, noun, outDir, proxyPort, hub, successPattern, rules, faultsFired } = ctx;
+  const { proxy, truth, flow, noun, outDir, proxyPort, hub, successPattern, rules, maxSteps, faultsFired } = ctx;
   proxy.setScenario(scenario);
   proxy.resetAccepted();
   const firedBefore = faultsFired();
@@ -89,6 +89,7 @@ async function runScenario({ scenario, runIndex, runs, ctx }) {
   const kane = await runKane({
     objective: objectiveFor(flow, scenario),
     url: `http://127.0.0.1:${proxyPort}`,
+    maxSteps,
     onLine: (line) => {
       const text = feedText(line);
       if (text) {
@@ -105,8 +106,8 @@ async function runScenario({ scenario, runIndex, runs, ctx }) {
 
   // The browser's own network log and the final screenshot come from Kane's evidence pack.
   const evidence = await readEvidencePack(kane.runEnd?.session_dir);
-  const network = evidence.harText ? writeRequestsFromHar(evidence.harText) : [];
-  const check = crossCheck({ reportedStatus, requests: network, harAvailable: evidence.harText !== null });
+  const network = evidence.harTexts.flatMap((text) => writeRequestsFromHar(text));
+  const check = crossCheck({ reportedStatus, requests: network, harAvailable: evidence.harTexts.length > 0 });
   const requestStatus = check.status;
   let screenshot;
   if (evidence.screenshot) {
@@ -163,6 +164,7 @@ export async function runChaosAgainst({
   flow,
   scenarios = SCENARIOS,
   repeat = 1,
+  maxSteps = 15,
   outDir,
   truth = null,
   noun = 'order',
@@ -195,7 +197,7 @@ export async function runChaosAgainst({
   hub.emit({ type: 'run_start', scenarios, repeat, target: appUrl, flow, noun, claim });
 
   const rules = { prefixes: proxyOptions.prefixes ?? DEFAULT_PREFIXES, methods: proxyOptions.methods ?? DEFAULT_METHODS };
-  const ctx = { proxy, truth, flow, noun, outDir, proxyPort, hub, successPattern, rules, faultsFired: () => faultCount };
+  const ctx = { proxy, truth, flow, noun, outDir, proxyPort, hub, successPattern, rules, maxSteps, faultsFired: () => faultCount };
   const results = [];
   try {
     for (const scenario of scenarios) {

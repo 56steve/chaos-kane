@@ -18,8 +18,19 @@ export function pickFinalScreenshot(entryNames) {
   return candidates[0]?.name ?? null;
 }
 
-export function pickHar(entryNames) {
-  return entryNames.find((name) => name.endsWith('logs/0-network.har')) ?? null;
+/**
+ * Kane writes the browser's network log as numbered files (0-network.har,
+ * 1-network.har, ...), starting a new one at a page change. A write made after
+ * the first page, like a form submit, lives in a later file, so every file is
+ * returned, in numeric order within each test folder.
+ */
+export function pickHars(entryNames) {
+  return entryNames
+    .map((name) => ({ name, match: name.match(/^(.*)\/logs\/(\d+)-network\.har$/) }))
+    .filter((candidate) => candidate.match)
+    .map((candidate) => ({ name: candidate.name, folder: candidate.match[1], index: Number(candidate.match[2]) }))
+    .sort((a, b) => a.folder.localeCompare(b.folder) || a.index - b.index)
+    .map((candidate) => candidate.name);
 }
 
 /**
@@ -85,13 +96,13 @@ async function newestPack(sessionDir) {
 }
 
 /**
- * Reads the final screenshot and the network log out of a run's evidence pack
+ * Reads the final screenshot and the network logs out of a run's evidence pack
  * (a zip) straight to memory, never extracting to disk. Packs also hold account
  * details, so only these two items are ever read. Returns nulls when anything is
  * missing, including a machine without `unzip`.
  */
 export async function readEvidencePack(sessionDir) {
-  const empty = { screenshot: null, harText: null };
+  const empty = { screenshot: null, harTexts: [] };
   if (typeof sessionDir !== 'string' || sessionDir === '') {
     return empty;
   }
@@ -103,7 +114,7 @@ export async function readEvidencePack(sessionDir) {
     const { stdout } = await execFileAsync('unzip', ['-Z1', pack], { maxBuffer: MAX_BYTES });
     const entryNames = stdout.split('\n').filter(Boolean);
     const screenshotName = pickFinalScreenshot(entryNames);
-    const harName = pickHar(entryNames);
+    const harNames = pickHars(entryNames);
 
     const read = async (name, encoding) => {
       const { stdout: content } = await execFileAsync('unzip', ['-p', pack, escapeZipPattern(name)], { maxBuffer: MAX_BYTES, encoding });
@@ -111,7 +122,7 @@ export async function readEvidencePack(sessionDir) {
     };
     return {
       screenshot: screenshotName ? await read(screenshotName, 'buffer') : null,
-      harText: harName ? await read(harName, 'utf8') : null,
+      harTexts: await Promise.all(harNames.map((name) => read(name, 'utf8'))),
     };
   } catch {
     return empty;

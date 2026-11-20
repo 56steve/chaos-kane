@@ -6,10 +6,10 @@ chaos-kane breaks an app's API on purpose with a fault proxy, lets Kane CLI driv
 
 ## State of the repo
 
-- Branches: `main` (default) and `development` (where work happens). Both were identical at `380bb63`; `development` is one commit ahead (`feat(mcp): report progress while a check runs`). Merge it into `main` before submitting, with a fast-forward so hashes stay the same.
+- Branches: `main` (default) and `development` (where work happens). Merge `development` into `main` with a fast-forward so hashes stay the same, and check `git rev-list --left-right --count origin/main...origin/development` before submitting.
 - The repo is **private**. It must be made public before submitting (judges need to run it).
 - GitHub Pages is **not** enabled. `docs/index.html` is a static replay that can be hosted there if wanted.
-- Checks: `npm test` (282 tests), `npm run smoke`, `npm run check`. All pass. CI runs them on pushes to `main` and `development` (Node 22).
+- Checks: `npm test` (293 tests), `npm run smoke`, `npm run check`. All pass. CI runs them on pushes to `main` and `development` (Node 22).
 
 ## Set up on a new machine
 
@@ -30,6 +30,7 @@ npm run chaos                          # the demo shop through Kane (about 120 t
 - Fault proxy with 8 scenarios, including a lost reply (`ghost`) and a double click (`double`). HTTPS upstreams work, and a site that writes its own absolute address stays inside the proxy.
 - The fault target is **learned**: the baseline run records the flow's writes and every fault then hits only the last successful one (the login is left alone). `--fault-paths` overrides it.
 - Verdicts come from three facts (page text, the browser's network log, the backend's real record count), never from Kane's own pass or fail. Anything unprovable is "unable to verify".
+- `audit`: recomputes the verdicts of any saved report from its own evidence, with no Kane, no credits and no network, and exits 1 if one was edited (`npm run audit -- reports/replay-before`). The tests run it over every committed report.
 - `doctor` (setup check), `--dry-run`, `--max-steps`, `--repeat`, `--baseline` (fail only on new failures), `--agent-claim`.
 - Outputs: HTML report, `summary.md` (also the GitHub job summary), `fix-brief.md`, status badge, static replay and live dashboard.
 - Agent hooks: MCP server (`bin/chaos-kane-mcp.js`: `chaos_check`, `chaos_scenarios`, `chaos_doctor`, with progress updates while it runs) and a stop hook (`hooks/stop-gate.js`, registered in `.claude/settings.json`).

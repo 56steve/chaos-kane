@@ -3,6 +3,7 @@ import { access, constants } from 'node:fs/promises';
 import net from 'node:net';
 import path from 'node:path';
 import { promisify } from 'node:util';
+import { kaneCommand } from './kane-bin.js';
 import { fetchCount } from './truth.js';
 
 const execFileAsync = promisify(execFileCallback);
@@ -18,7 +19,10 @@ export function defaultDeps() {
     env: process.env,
     nodeVersion: process.versions.node,
     cwd: process.cwd(),
-    execFile: (command, args) => execFileAsync(command, args, { timeout: COMMAND_TIMEOUT_MS, maxBuffer: 1024 * 1024 }),
+    execFile: (command, args) => {
+      const launch = command === 'kane-cli' ? kaneCommand(args) : { command, args };
+      return execFileAsync(launch.command, launch.args, { timeout: COMMAND_TIMEOUT_MS, maxBuffer: 1024 * 1024 });
+    },
     fileExists: (file) => access(file, constants.F_OK).then(() => true, () => false),
     listenOn: (port) =>
       new Promise((resolve) => {

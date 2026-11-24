@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { kaneCommand } from './kane-bin.js';
 
 const KILL_GRACE_MS = 30000;
 
@@ -43,7 +44,8 @@ export function runKane({ objective, url, maxSteps = 15, timeoutSec = 180, onLin
       '--timeout',
       String(timeoutSec),
     ];
-    const child = spawn('kane-cli', args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    const launch = kaneCommand(args);
+    const child = spawn(launch.command, launch.args, { stdio: ['ignore', 'pipe', 'pipe'] });
 
     let stdout = '';
     let stderr = '';

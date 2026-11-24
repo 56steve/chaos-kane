@@ -8,7 +8,7 @@ import { createHub } from './hub.js';
 import { runKane } from './kane.js';
 import { renderReport, summarize } from './report.js';
 import { scrubText } from './scrub.js';
-import { crossCheck, readEvidencePack, writeRequestsFromHar } from './evidence.js';
+import { crossCheck, readEvidencePack, unzipAvailable, writeRequestsFromHar } from './evidence.js';
 import { messageOrLanding } from './landing.js';
 import { learnFaultTarget, orderScenarios } from './target.js';
 import { applyCrossCheck, applyEvidenceCheck, applyFaultCheck } from './validity.js';
@@ -25,15 +25,19 @@ const RETRY_ONCE =
   'If the page says there was a problem, repeat the same final action once more and wait up to 10 seconds again.';
 const DOUBLE_CLICK =
   'Do not click that last button once: click it twice in very quick succession, two clicks within half a second.';
-const RECORD =
-  "Store the exact text of the confirmation or error message the page shows at the end as 'status_message' (store 'none' if there is none). Store the HTTP status code of the last request the page made that saved or changed data (a POST, PUT, PATCH or DELETE) as 'last_request_status' (store 'no response' if that request got no response). Do not judge the result. Only record these two values.";
+const RECORD_MESSAGE =
+  "Store the exact text of the confirmation or error message the page shows at the end as 'status_message' (store 'none' if there is none).";
+const RECORD_STATUS =
+  " Store the HTTP status code of the last request the page made that saved or changed data (a POST, PUT, PATCH or DELETE) as 'last_request_status' (store 'no response' if that request got no response).";
+const RECORD_STATUS_ONLY_MESSAGE = ' Do not judge the result. Only record this value.';
+const RECORD_BOTH = ' Do not judge the result. Only record these two values.';
 
 /**
  * Builds the Kane objective for one scenario. The ghost scenario adds a retry,
  * because duplicates only appear when the user tries again; the double scenario
  * asks for a fast double click for the same reason.
  */
-export function objectiveFor(flow, scenario) {
+export function objectiveFor(flow, scenario, { askStatus = true } = {}) {
   const parts = [flow];
   if (scenario === 'double') {
     parts.push(DOUBLE_CLICK);
@@ -42,7 +46,7 @@ export function objectiveFor(flow, scenario) {
   if (scenario === 'ghost') {
     parts.push(RETRY_ONCE);
   }
-  parts.push(RECORD);
+  parts.push(askStatus ? `${RECORD_MESSAGE}${RECORD_STATUS}${RECORD_BOTH}` : `${RECORD_MESSAGE}${RECORD_STATUS_ONLY_MESSAGE}`);
   return parts.join(' ');
 }
 
@@ -82,7 +86,7 @@ function feedText(line) {
 }
 
 async function runScenario({ scenario, runIndex, runs, ctx }) {
-  const { proxy, truth, flow, noun, outDir, proxyPort, hub, successPattern, rules, maxSteps, faultsFired } = ctx;
+  const { proxy, truth, flow, noun, outDir, proxyPort, hub, successPattern, rules, maxSteps, faultsFired, askStatus } = ctx;
   proxy.setScenario(scenario);
   proxy.resetAccepted();
   const firedBefore = faultsFired();
@@ -90,7 +94,7 @@ async function runScenario({ scenario, runIndex, runs, ctx }) {
 
   const before = truth ? await truth.count() : 0;
   const kane = await runKane({
-    objective: objectiveFor(flow, scenario),
+    objective: objectiveFor(flow, scenario, { askStatus }),
     url: `http://127.0.0.1:${proxyPort}`,
     maxSteps,
     onLine: (line) => {
@@ -112,7 +116,7 @@ async function runScenario({ scenario, runIndex, runs, ctx }) {
   // The browser's own network log and the final screenshot come from Kane's evidence pack.
   const evidence = await readEvidencePack(kane.runEnd?.session_dir);
   const network = evidence.harTexts.flatMap((text) => writeRequestsFromHar(text));
-  const check = crossCheck({ reportedStatus, requests: network, harAvailable: evidence.harTexts.length > 0 });
+  const check = crossCheck({ reportedStatus, requests: network, harAvailable: evidence.harTexts.length > 0, statusAsked: askStatus });
   const requestStatus = check.status;
   let screenshot;
   if (evidence.screenshot) {
@@ -204,7 +208,9 @@ export async function runChaosAgainst({
   hub.emit({ type: 'run_start', scenarios, repeat, target: appUrl, flow, noun, claim });
 
   const rules = { prefixes: proxyOptions.prefixes ?? DEFAULT_PREFIXES, methods: proxyOptions.methods ?? DEFAULT_METHODS };
-  const ctx = { proxy, truth, flow, noun, outDir, proxyPort, hub, successPattern, rules, maxSteps, faultsFired: () => faultCount };
+  // With a readable network log, Kane is only asked for the page message: the browser's own log is the authority on the status, and a lighter last step is less likely to fail.
+  const askStatus = !(await unzipAvailable());
+  const ctx = { proxy, truth, flow, noun, outDir, proxyPort, hub, successPattern, rules, maxSteps, askStatus, faultsFired: () => faultCount };
   const results = [];
   try {
     const order = autoTarget ? orderScenarios(scenarios) : scenarios;

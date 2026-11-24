@@ -67,13 +67,17 @@ export function writeRequestsFromHar(harText, methods = WRITE_METHODS) {
  * available it is the authoritative value; a mismatch means Kane's observation
  * cannot be trusted.
  */
-export function crossCheck({ reportedStatus, requests, harAvailable }) {
+export function crossCheck({ reportedStatus, requests, harAvailable, statusAsked = true }) {
   const kane = parseStatusCode(reportedStatus);
   if (!harAvailable) {
     return { source: 'kane', agreement: 'unavailable', status: reportedStatus ?? 'no response' };
   }
   const last = requests[requests.length - 1];
   const logged = last && last.status > 0 ? last.status : null;
+  if (!statusAsked) {
+    // Kane was only asked for the page message; the browser's own log is the sole source of the status.
+    return { source: 'network-log', agreement: 'network-log-only', status: logged === null ? 'no response' : String(logged) };
+  }
   const agreed = logged === kane;
   return {
     source: 'network-log',
@@ -81,6 +85,16 @@ export function crossCheck({ reportedStatus, requests, harAvailable }) {
     status: logged === null ? 'no response' : String(logged),
     kaneReported: reportedStatus === undefined ? undefined : String(reportedStatus),
   };
+}
+
+/** True when `unzip` runs, which is what reading the browser's network log from Kane's evidence pack needs. */
+export async function unzipAvailable() {
+  try {
+    await execFileAsync('unzip', ['-v']);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function escapeZipPattern(name) {

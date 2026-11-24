@@ -170,3 +170,11 @@ test('a missing session or pack gives empty evidence instead of an error', async
   const unset = await readEvidencePack(undefined);
   assert.equal(unset.screenshot, null);
 });
+
+test('crossCheck takes the status from the network log alone when Kane was not asked for it', () => {
+  const requests = [{ method: 'POST', path: '/api/orders', status: 500 }];
+  const check = crossCheck({ reportedStatus: undefined, requests, harAvailable: true, statusAsked: false });
+  assert.deepEqual(check, { source: 'network-log', agreement: 'network-log-only', status: '500' });
+  const none = crossCheck({ reportedStatus: undefined, requests: [], harAvailable: true, statusAsked: false });
+  assert.equal(none.status, 'no response');
+});

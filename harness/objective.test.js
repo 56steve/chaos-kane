@@ -22,3 +22,14 @@ test('the flow comes first, the retry belongs to ghost only and the double click
   assert.match(objectiveFor('x', 'double'), /two clicks within half a second/i);
   assert.doesNotMatch(objectiveFor('x', 'ghost'), /two clicks within half a second/i);
 });
+
+test('with a readable network log, Kane is asked only for the message', () => {
+  const text = objectiveFor('Do the thing.', 'none', { askStatus: false });
+  assert.match(text, /status_message/);
+  assert.doesNotMatch(text, /last_request_status/);
+  assert.match(text, /Do not judge the result/);
+});
+
+test('by default Kane is asked for both values, exactly as before', () => {
+  assert.equal(objectiveFor('x', 'none'), objectiveFor('x', 'none', { askStatus: true }));
+});

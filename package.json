@@ -4,6 +4,20 @@
   "private": true,
   "type": "module",
   "description": "Break any web app's API with Kane CLI and check what the user is really told, against what the backend really did.",
+  "license": "MIT",
+  "homepage": "https://github.com/56steve/chaos-kane#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/56steve/chaos-kane.git"
+  },
+  "keywords": [
+    "chaos-testing",
+    "fault-injection",
+    "kane-cli",
+    "testing",
+    "ai-agents",
+    "mcp"
+  ],
   "bin": {
     "chaos-kane": "bin/chaos-kane.js",
     "chaos-kane-mcp": "bin/chaos-kane-mcp.js"

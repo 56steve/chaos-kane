@@ -43,6 +43,7 @@ npm run chaos                          # the demo shop through Kane (about 120 t
 | Repeat runs | `reports/stability` | same verdicts on 3 runs of every scenario |
 | Conduit (RealWorld reference app, not written by us) | `reports/third-party` | 0 of 5 survived, then 4 of 5 after a small fix ([diff](../reports/third-party/conduit-fix.diff)) |
 | Stop hook, simulated with the exact Stop-hook input | run on 20 Nov | broken checkout blocked (exit 2, with evidence), fixed one allowed (exit 0), unchanged code allowed instantly |
+| Stop hook, **live in a Claude Code session** | run on 26 Nov | Claude Code ran the hook at the end of a turn and it blocked a deliberately broken checkout with Kane's evidence (a fake success on a 500, a duplicate order); the fixed checkout passed (a live pass was also recorded on 20 Nov) |
 | MCP server over the real protocol | run on 20 Nov | handshake, 3 tools, bad input handled, a real `chaos_check` returned evidence and a brief |
 | A real HTTPS site | read-only run | page loaded through the proxy, verdict correctly "unable to verify" |
 

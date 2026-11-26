@@ -62,9 +62,9 @@ To reproduce the Conduit run: clone [Conduit](https://github.com/TonyMckes/condu
    - Stop hook: open this repo in Claude Code, run `git show 1167bf3:app/client.js > app/client.js` (the original "fake success" checkout), and ask the agent to stop. Kane should block it with the evidence. Restore the file with `git checkout app/client.js`.
 2. [ ] Merge `development` into `main`, make the repo public, then clone it fresh from the public URL and run `npm run doctor`, `npm test` and `npm run smoke` as an outsider would.
 3. [ ] Upload the demo video to YouTube (unlisted is fine) with the `.srt` as captions.
-4. [ ] Publish at least **two different public posts** about the project (Hacker News, X, Reddit or LinkedIn). Drafts are in [submission.md](submission.md); fill in the repo and video links.
+4. [ ] Publish at least **two different public posts** about the project (Hacker News, X, Reddit or LinkedIn). Keep the drafts outside the repo; use the repo link above and add the video link.
 5. [ ] Confirm event registration (Luma or the event site) and that the same email is used on the TestMu AI account.
-6. [ ] Submit the form: GitHub URL, about-the-app text ([submission.md](submission.md)), YouTube link, optional live URL, and the post links.
+6. [ ] Submit the form: GitHub URL, the about-the-app text, YouTube link, optional live URL, and the post links.
 
 Plan: feature freeze 22 Nov, repo public 24 Nov, submit 25 Nov, leaving a day of buffer.
 
@@ -92,4 +92,4 @@ Plan: feature freeze 22 Nov, repo public 24 Nov, submit 25 Nov, leaving a day of
 ## Where things are
 
 - `bin/` CLI and MCP entry points; `harness/` verdicts, runner, evidence, reports, MCP; `chaos/` proxy; `app/` demo shop; `hooks/` stop hook; `scripts/` smoke test, replay, badge, scrubber.
-- `docs/` spike findings, CI example, submission text, replay site; `reports/` committed evidence from real runs.
+- `docs/` spike findings, CI example, replay site; `reports/` committed evidence from real runs.

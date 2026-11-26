@@ -9,7 +9,7 @@ chaos-kane breaks an app's API on purpose with a fault proxy, lets Kane CLI driv
 - Branches: `main` (default) and `development` (where work happens). Merge `development` into `main` with a fast-forward so hashes stay the same, and check `git rev-list --left-right --count origin/main...origin/development` before submitting.
 - The repo is **private**. It must be made public before submitting (judges need to run it).
 - GitHub Pages is **not** enabled. `docs/index.html` is a static replay that can be hosted there if wanted.
-- Checks: `npm test` (293 tests), `npm run smoke`, `npm run check`. All pass. CI runs them on pushes to `main` and `development` (Node 22).
+- Checks: `npm test` (304 tests), `npm run smoke`, `npm run check`. All pass. CI runs them on pushes to `main` and `development` (Node 22).
 
 ## Set up on a new machine
 
@@ -71,7 +71,7 @@ Plan: feature freeze 22 Nov, repo public 24 Nov, submit 25 Nov, leaving a day of
 1. **Hook and MCP were never run inside a live agent** (see To do 1). This is the biggest untested item.
 2. **Timing.** The stop hook takes about 5 minutes each time code in `app/` or `chaos/` changed. A `chaos_check` takes roughly 2 to 3 minutes per scenario (about 8 minutes for the default three). The server sends progress updates and a 15-second heartbeat, but clients may still time out on their own. Quick check: `faults: ["none","error500"]`.
 3. **Kane is an AI agent and varies between runs.** Seen in practice: it gave up on a multi-part instruction, ran out of steps on a longer flow (raise `--max-steps`), and sometimes observed things differently. `--repeat` measures it.
-4. **Only tested on macOS.** Linux and Windows are untested beyond the unit tests and CI.
+4. **Developed and run on macOS.** A Windows launcher fix (the `kane-cli.cmd` shim) is in and unit-tested, and CI runs the unit tests on Linux. A full Kane run on Windows or Linux is not confirmed here.
 5. **An API on another domain is invisible to the proxy.** Those scenarios report "unable to verify" with the reason.
 6. **The CI template (`docs/ci-example.yml`) has never been run.**
 7. **A reply lost after the save still fails on Conduit** after the fix. The user is told it failed but the article exists. Fixing it needs the server to recognise retries.

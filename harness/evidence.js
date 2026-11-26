@@ -70,6 +70,10 @@ export function writeRequestsFromHar(harText, methods = WRITE_METHODS) {
 export function crossCheck({ reportedStatus, requests, harAvailable, statusAsked = true }) {
   const kane = parseStatusCode(reportedStatus);
   if (!harAvailable) {
+    if (!statusAsked) {
+      // Nothing to fall back on: Kane was not asked for the status and the log cannot be read.
+      return { source: 'none', agreement: 'unreadable', status: 'unknown' };
+    }
     return { source: 'kane', agreement: 'unavailable', status: reportedStatus ?? 'no response' };
   }
   const last = requests[requests.length - 1];

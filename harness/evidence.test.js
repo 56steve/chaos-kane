@@ -178,3 +178,15 @@ test('crossCheck takes the status from the network log alone when Kane was not a
   const none = crossCheck({ reportedStatus: undefined, requests: [], harAvailable: true, statusAsked: false });
   assert.equal(none.status, 'no response');
 });
+
+test('when Kane was not asked for the status and the network log cannot be read, the status is unknown, not "no response"', () => {
+  const result = crossCheck({ reportedStatus: undefined, requests: [], harAvailable: false, statusAsked: false });
+  assert.equal(result.agreement, 'unreadable');
+  assert.equal(result.source, 'none');
+});
+
+test('when Kane was asked, a missing network log still falls back to Kane\'s own status', () => {
+  const result = crossCheck({ reportedStatus: '500', requests: [], harAvailable: false, statusAsked: true });
+  assert.equal(result.agreement, 'unavailable');
+  assert.equal(result.status, '500');
+});

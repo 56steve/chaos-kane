@@ -78,3 +78,14 @@ test('an already unverifiable verdict keeps its own reason', () => {
   const verdict = { outcome: 'incomplete', reasons: ['the fault never fired'] };
   assert.deepEqual(applyCrossCheck(verdict, { agreement: 'disagreed', status: '1', kaneReported: '2' }), verdict);
 });
+
+test('an unreadable network log, with no status from Kane, makes the result unable to verify', () => {
+  const verdict = applyCrossCheck({ outcome: 'failed', reasons: ['fake success'] }, { source: 'none', agreement: 'unreadable', status: 'unknown' });
+  assert.equal(verdict.outcome, 'incomplete');
+  assert.match(verdict.reasons[0], /network log could not be read/i);
+});
+
+test('an unreadable network log does not change a result that was already incomplete', () => {
+  const incomplete = { outcome: 'incomplete', reasons: ['no message'] };
+  assert.deepEqual(applyCrossCheck(incomplete, { source: 'none', agreement: 'unreadable', status: 'unknown' }), incomplete);
+});

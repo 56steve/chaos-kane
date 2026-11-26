@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
-const KANE_SCRIPT = path.join('node_modules', '@testmuai', 'kane-cli', 'bin', 'kane-cli.cjs');
+const KANE_SCRIPT = path.win32.join('node_modules', '@testmuai', 'kane-cli', 'bin', 'kane-cli.cjs');
 
 /**
  * Where to start kane-cli. On Windows npm installs a kane-cli.cmd shim, which
@@ -11,10 +11,12 @@ const KANE_SCRIPT = path.join('node_modules', '@testmuai', 'kane-cli', 'bin', 'k
  */
 export function kaneCommand(args, { platform = process.platform, env = process.env, exists = existsSync, execPath = process.execPath } = {}) {
   if (platform === 'win32') {
-    const dirs = (env.PATH ?? env.Path ?? '').split(path.delimiter).filter(Boolean);
+    // Windows rules for Windows paths, so the result does not depend on the machine running this code.
+    const win = path.win32;
+    const dirs = (env.PATH ?? env.Path ?? '').split(win.delimiter).filter(Boolean);
     for (const dir of dirs) {
-      if (exists(path.join(dir, 'kane-cli.cmd'))) {
-        const script = path.join(dir, KANE_SCRIPT);
+      if (exists(win.join(dir, 'kane-cli.cmd'))) {
+        const script = win.join(dir, KANE_SCRIPT);
         if (exists(script)) {
           return { command: execPath, args: [script, ...args] };
         }

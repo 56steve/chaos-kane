@@ -31,7 +31,16 @@ function describeStatus(value) {
  * differ the observation cannot be trusted, so the verdict becomes unable to verify.
  */
 export function applyCrossCheck(verdict, check) {
-  if (check.agreement !== 'disagreed' || verdict.outcome === 'incomplete') {
+  if (verdict.outcome === 'incomplete') {
+    return verdict;
+  }
+  if (check.agreement === 'unreadable') {
+    return {
+      outcome: 'incomplete',
+      reasons: ["the browser's network log could not be read and Kane was not asked for the status, so the status of the write request is unknown"],
+    };
+  }
+  if (check.agreement !== 'disagreed') {
     return verdict;
   }
   return {

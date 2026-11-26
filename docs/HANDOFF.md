@@ -55,9 +55,9 @@ To reproduce the Conduit run: clone [Conduit](https://github.com/TonyMckes/condu
 
 ## To do (needs the owner)
 
-1. [ ] **Try the stop hook and MCP server in a real Claude Code session.** They were tested by simulating the protocols only, because the Claude Code CLI was not logged in on the build machine.
-   - MCP: `claude mcp add chaos-kane -- node /absolute/path/to/chaos-kane/bin/chaos-kane-mcp.js`, then ask the agent to call `chaos_doctor`, then `chaos_check` with `faults: ["none","error500"]` on a running app.
-   - Stop hook: open this repo in Claude Code, run `git show 1167bf3:app/client.js > app/client.js` (the original "fake success" checkout), and ask the agent to stop. Kane should block it with the evidence. Restore the file with `git checkout app/client.js`.
+1. [ ] **Try the MCP server in a real agent session** (optional). The stop hook is already proven live in Claude Code (see the evidence table); the MCP server was only tested by driving its protocol directly.
+   - `claude mcp add chaos-kane -- node /absolute/path/to/chaos-kane/bin/chaos-kane-mcp.js`, then ask the agent to call `chaos_doctor`, then `chaos_check` with `faults: ["none","error500"]` on a running app.
+   - To repeat the hook test yourself: open this repo in Claude Code, run `git show 1167bf3:app/client.js > app/client.js` (the original "fake success" checkout), and ask the agent to stop. Kane should block it with the evidence. Restore the file with `git checkout app/client.js`.
 2. [ ] Merge `development` into `main`, make the repo public, then clone it fresh from the public URL and run `npm run doctor`, `npm test` and `npm run smoke` as an outsider would.
 3. [ ] Upload the demo video to YouTube (unlisted is fine) with the `.srt` as captions.
 4. [ ] Publish at least **two different public posts** about the project (Hacker News, X, Reddit or LinkedIn). Drafts are in [submission.md](submission.md); fill in the repo and video links.
@@ -68,8 +68,8 @@ Plan: feature freeze 22 Nov, repo public 24 Nov, submit 25 Nov, leaving a day of
 
 ## Known risks and worries
 
-1. **Hook and MCP were never run inside a live agent** (see To do 1). This is the biggest untested item.
-2. **Timing.** The stop hook takes about 5 minutes each time code in `app/` or `chaos/` changed. A `chaos_check` takes roughly 2 to 3 minutes per scenario (about 8 minutes for the default three). The server sends progress updates and a 15-second heartbeat, but clients may still time out on their own. Quick check: `faults: ["none","error500"]`.
+1. **The MCP server was never run inside a live agent** (see To do 1), and the stop hook is proven live in Claude Code only, not in other agents.
+2. **Timing.** The stop hook takes about 5 minutes each time code in `app/` or `chaos/` changed. A `chaos_check` takes roughly 2 to 3 minutes per scenario (about 8 minutes for the default three). The server sends progress updates and a 15-second heartbeat, but clients may still time out on their own. Quick check: `faults: ["none","error500"]`. The stop hook and the demo use fixed ports (4100 for the proxy, 4000 for the demo app); if another run holds them, the hook reports that it could not run and lets the agent stop, because it is designed to fail soft.
 3. **Kane is an AI agent and varies between runs.** Seen in practice: it gave up on a multi-part instruction, ran out of steps on a longer flow (raise `--max-steps`), and sometimes observed things differently. `--repeat` measures it.
 4. **Developed and run on macOS.** A Windows launcher fix (the `kane-cli.cmd` shim) is in and unit-tested, and CI runs the unit tests on Linux. A full Kane run on Windows or Linux is not confirmed here.
 5. **An API on another domain is invisible to the proxy.** Those scenarios report "unable to verify" with the reason.

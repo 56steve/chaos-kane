@@ -26,7 +26,7 @@ It learns which request to break from a baseline run, so a login is left alone. 
 
 How the agent and Kane talk: when something fails, chaos-kane writes fix-brief.md (the evidence and what a correct fix looks like) for any coding agent. A stop hook runs Kane when the agent tries to finish and blocks it until the checkout survives; an MCP server (chaos_check, chaos_doctor, chaos_scenarios, with progress updates) lets any agent run the check itself. A baseline compare fails CI only on new failures.
 
-What Kane caught: fake success on a 500, a duplicate order after a lost reply, and on Conduit a blank page and a 404 page where an error should show. The stop hook and MCP server were verified by driving their protocols directly, not yet inside a live agent session.
+What Kane caught: fake success on a 500, a duplicate order after a lost reply, and on Conduit a blank page and a 404 page where an error should show. The stop hook was verified live inside a Claude Code session: it blocked a deliberately broken checkout with Kane's evidence and let the fixed one through. The MCP server was verified by driving its protocol directly.
 
 Run it: Node 22, Chrome, npm install -g @testmuai/kane-cli, kane-cli login, then clone the repo and run npm run doctor, then npm run chaos (about 120 to 240 credits; --dry-run shows the cost first). npm run audit -- reports/replay-before is free and offline.
 
@@ -95,7 +95,7 @@ On a demo shop it caught "Order placed!" after a 500 and a duplicate order after
 
 To try it you need Kane CLI (free credits on signup), Node 22 and Chrome. If you only want to check the claims, `npm run audit -- reports/replay-before` recomputes the saved verdicts from their evidence, offline.
 
-Known gaps: it is only tested on macOS so far, and the stop hook and MCP server are verified at the protocol level, not yet in many agents. Feedback welcome.
+Known gaps: it is only tested on macOS so far; the stop hook is verified live in one agent (Claude Code) and the MCP server at the protocol level. Feedback welcome.
 
 https://github.com/56steve/chaos-kane
 
